@@ -540,7 +540,6 @@
 				ARCHS = (
 					armv7,
 					arm64,
-					arm64e,
 					i386,
 					x86_64,
 				);
@@ -599,7 +598,6 @@
 				ARCHS = (
 					armv7,
 					arm64,
-					arm64e,
 					i386,
 					x86_64,
 				);
