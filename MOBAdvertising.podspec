@@ -13,6 +13,8 @@ Pod::Spec.new do |s|
     s.swift_version = '5.0'
     s.dependency 'Google-Mobile-Ads-SDK', '7.67.0'
 
+    s.static_framework = true
+
     s.weak_framework = 'UIKit'
     s.weak_framework = 'AVFoundation'
     s.weak_framework = 'AudioToolbox'
