@@ -8,9 +8,7 @@ Pod::Spec.new do |s|
     s.source           = { :git => 'https://github.com/Moballo-LLC/MOBAdvertising.git', :tag => s.version.to_s }
 
     s.platforms = { :ios => "10.0" }
-    s.pod_target_xcconfig = {
-        'ARCHS[sdk=iphonesimulator*]' => '$(ARCHS_STANDARD_64_BIT)'
-    }
+    s.pod_target_xcconfig = { 'VALID_ARCHS' => 'armv7 arm64 arm64e i386 x86_64' }
     s.swift_version = '5.0'
 
     s.static_framework = true
