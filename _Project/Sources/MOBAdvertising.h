@@ -8,4 +8,4 @@ FOUNDATION_EXPORT double MOBAdvertisingVersionNumber;
 FOUNDATION_EXPORT const unsigned char MOBAdvertisingVersionString[];
 
 // In this header, you should import all the public headers of your framework using statements like #import <Kanna/PublicHeader.h>
-#import <GoogleMobileAds/GoogleMobileAds.h>
+// #import <GoogleMobileAds/GoogleMobileAds.h>

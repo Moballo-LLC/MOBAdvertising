@@ -87,8 +87,6 @@
 		96894C8B219892EB0072C89F /* SafariServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SafariServices.framework; path = System/Library/Frameworks/SafariServices.framework; sourceTree = SDKROOT; };
 		96894C8D219892F30072C89F /* WebKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WebKit.framework; path = System/Library/Frameworks/WebKit.framework; sourceTree = SDKROOT; };
 		968DBC8F25562B090018BF84 /* Pods.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = Pods.xcodeproj; path = Pods/Pods.xcodeproj; sourceTree = "<group>"; };
-		968DBCA825562B340018BF84 /* GoogleMobileAds.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = GoogleMobileAds.xcframework; path = "Pods/Google-Mobile-Ads-SDK/Frameworks/GoogleMobileAdsFramework-Current/GoogleMobileAds.xcframework"; sourceTree = "<group>"; };
-		968DBCAB25562B5F0018BF84 /* UserMessagingPlatform.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = UserMessagingPlatform.xcframework; path = Pods/GoogleUserMessagingPlatform/Frameworks/Release/UserMessagingPlatform.xcframework; sourceTree = "<group>"; };
 		968DBCB625562BBE0018BF84 /* MOBAdvertising.podspec */ = {isa = PBXFileReference; lastKnownFileType = text; name = MOBAdvertising.podspec; path = ../MOBAdvertising.podspec; sourceTree = "<group>"; };
 		96BE4BDC24EF8DB500082B4A /* AdSupport.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AdSupport.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk/System/Library/Frameworks/AdSupport.framework; sourceTree = DEVELOPER_DIR; };
 		96BE4BE524EF8EE400082B4A /* CoreServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreServices.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk/System/Library/Frameworks/CoreServices.framework; sourceTree = DEVELOPER_DIR; };
@@ -180,10 +178,7 @@
 		};
 		97D67C33FC933CC0C4422253 /* Frameworks */ = {
 			isa = PBXGroup;
-			children = (
-				968DBCAB25562B5F0018BF84 /* UserMessagingPlatform.xcframework */,
-				968DBCA825562B340018BF84 /* GoogleMobileAds.xcframework */,
-				96BE4BE524EF8EE400082B4A /* CoreServices.framework */,
+			children = (96BE4BE524EF8EE400082B4A /* CoreServices.framework */,
 				96BE4BDC24EF8DB500082B4A /* AdSupport.framework */,
 				96894C8D219892F30072C89F /* WebKit.framework */,
 				96894C8B219892EB0072C89F /* SafariServices.framework */,
