@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 52;
+	objectVersion = 46;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -26,8 +26,6 @@
 		96894C8A219892CA0072C89F /* AdSupport.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 96894C89219892CA0072C89F /* AdSupport.framework */; settings = {ATTRIBUTES = (Weak, ); }; };
 		96894C8C219892EB0072C89F /* SafariServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 96894C8B219892EB0072C89F /* SafariServices.framework */; settings = {ATTRIBUTES = (Weak, ); }; };
 		96894C8E219892F30072C89F /* WebKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 96894C8D219892F30072C89F /* WebKit.framework */; settings = {ATTRIBUTES = (Weak, ); }; };
-		968DBCA925562B340018BF84 /* GoogleMobileAds.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 968DBCA825562B340018BF84 /* GoogleMobileAds.xcframework */; };
-		968DBCAC25562B5F0018BF84 /* UserMessagingPlatform.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 968DBCAB25562B5F0018BF84 /* UserMessagingPlatform.xcframework */; };
 		96BE4BE624EF8EE400082B4A /* CoreServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 96BE4BE524EF8EE400082B4A /* CoreServices.framework */; };
 		96C285641E076EFF00481834 /* MOBAdvertising.h in Headers */ = {isa = PBXBuildFile; fileRef = 96C285551E076EFF00481834 /* MOBAdvertising.h */; };
 		96D37D551F815543009FC1DE /* MOBAdvertisingBanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96D37D521F815407009FC1DE /* MOBAdvertisingBanner.swift */; };
@@ -116,10 +114,8 @@
 				96894C8A219892CA0072C89F /* AdSupport.framework in Frameworks */,
 				96894C88219892C20072C89F /* JavaScriptCore.framework in Frameworks */,
 				96894C85219892BD0072C89F /* Security.framework in Frameworks */,
-				968DBCAC25562B5F0018BF84 /* UserMessagingPlatform.xcframework in Frameworks */,
 				96894C86219892BD0072C89F /* SystemConfiguration.framework in Frameworks */,
 				96BE4BE624EF8EE400082B4A /* CoreServices.framework in Frameworks */,
-				968DBCA925562B340018BF84 /* GoogleMobileAds.xcframework in Frameworks */,
 				96894C82219892BC0072C89F /* StoreKit.framework in Frameworks */,
 				96894C81219892B00072C89F /* QuartzCore.framework in Frameworks */,
 				96894C7E2198928C0072C89F /* MessageUI.framework in Frameworks */,
@@ -534,11 +530,7 @@
 				INFOPLIST_FILE = Sources/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-					"@loader_path/Frameworks",
-				);
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				MARKETING_VERSION = 6.0.0;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
@@ -587,11 +579,7 @@
 				INFOPLIST_FILE = Sources/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-					"@loader_path/Frameworks",
-				);
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				MARKETING_VERSION = 6.0.0;
 				ONLY_ACTIVE_ARCH = NO;
 				OTHER_CFLAGS = (
@@ -604,9 +592,8 @@
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SKIP_INSTALL = YES;
 				SUPPORTS_MACCATALYST = YES;
-				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_INCLUDE_PATHS = "";
-				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_OPTIMIZATION_LEVEL = "-Owholemodule";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};

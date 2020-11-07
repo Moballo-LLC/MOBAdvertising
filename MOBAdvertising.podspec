@@ -9,12 +9,11 @@ Pod::Spec.new do |s|
 
     s.platforms = { :ios => "10.0" }
     s.swift_version = '5.0'
-
-    s.static_framework = true
     s.dependency 'Google-Mobile-Ads-SDK', '~> 7.68'
 
     s.framework = 'UIKit'
     s.framework = 'GoogleMobileAds'
+    s.framework = 'UserMessagingPlatform'
     s.framework = 'AVFoundation'
     s.framework = 'AudioToolbox'
     s.framework = 'CFNetwork'
