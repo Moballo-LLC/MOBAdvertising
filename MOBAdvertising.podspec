@@ -36,5 +36,5 @@ Pod::Spec.new do |s|
     s.weak_framework = 'SafariServices'
     s.weak_framework = 'WebKit'
 
-    s.source_files  = ['Sources/**/*.swift']
+    s.source_files  = ['_Project/Sources/**/*.swift']
 end
