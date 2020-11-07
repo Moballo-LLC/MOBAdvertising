@@ -9,10 +9,11 @@ Pod::Spec.new do |s|
 
     s.platforms = { :ios => "10.0" }
     s.pod_target_xcconfig = {
-        'VALID_ARCHS' => 'ios-armv7_arm64_arm64e ios-i386_x86_64-simulator',
         'EXCLUDED_ARCHS[sdk=iphonesimulator*]' => 'arm64'
     }
-    s.user_target_xcconfig = { 'EXCLUDED_ARCHS[sdk=iphonesimulator*]' => 'arm64' }
+    s.user_target_xcconfig = {
+        'EXCLUDED_ARCHS[sdk=iphonesimulator*]' => 'arm64'
+    }
     s.swift_version = '5.0'
 
     s.static_framework = true
