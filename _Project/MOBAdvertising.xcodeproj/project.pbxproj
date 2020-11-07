@@ -29,7 +29,6 @@
 		96BE4BE624EF8EE400082B4A /* CoreServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 96BE4BE524EF8EE400082B4A /* CoreServices.framework */; };
 		96C285641E076EFF00481834 /* MOBAdvertising.h in Headers */ = {isa = PBXBuildFile; fileRef = 96C285551E076EFF00481834 /* MOBAdvertising.h */; };
 		96D37D551F815543009FC1DE /* MOBAdvertisingBanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96D37D521F815407009FC1DE /* MOBAdvertisingBanner.swift */; };
-		A3D2F65EA6D6BB7BA9C46A8F /* Pods_MOBAdvertising_iOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2D60F371A9C6C502E1D90530 /* Pods_MOBAdvertising_iOS.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -127,7 +126,6 @@
 				96894C6B219892480072C89F /* AudioToolbox.framework in Frameworks */,
 				96894C69219892420072C89F /* AVFoundation.framework in Frameworks */,
 				960C9BE51E03C67600DB9484 /* UIKit.framework in Frameworks */,
-				A3D2F65EA6D6BB7BA9C46A8F /* Pods_MOBAdvertising_iOS.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
