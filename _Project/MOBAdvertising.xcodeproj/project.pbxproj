@@ -86,7 +86,6 @@
 		4DC8B755CE601827227CE757 /* Pods-MOBAdvertising_iOS.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-MOBAdvertising_iOS.release.xcconfig"; path = "Target Support Files/Pods-MOBAdvertising_iOS/Pods-MOBAdvertising_iOS.release.xcconfig"; sourceTree = "<group>"; };
 		7F5684A550FCE44A43ABDEC9 /* Pods-MOBAdvertising_iOS.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-MOBAdvertising_iOS.debug.xcconfig"; path = "Target Support Files/Pods-MOBAdvertising_iOS/Pods-MOBAdvertising_iOS.debug.xcconfig"; sourceTree = "<group>"; };
 		960C9BE41E03C67600DB9484 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
-		965AA2C11FC08F0700199E7C /* MOBAdvertising.podspec */ = {isa = PBXFileReference; lastKnownFileType = text; path = MOBAdvertising.podspec; sourceTree = "<group>"; };
 		96894C68219892420072C89F /* AVFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVFoundation.framework; path = System/Library/Frameworks/AVFoundation.framework; sourceTree = SDKROOT; };
 		96894C6A219892480072C89F /* AudioToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioToolbox.framework; path = System/Library/Frameworks/AudioToolbox.framework; sourceTree = SDKROOT; };
 		96894C6C219892500072C89F /* CFNetwork.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CFNetwork.framework; path = System/Library/Frameworks/CFNetwork.framework; sourceTree = SDKROOT; };
@@ -109,6 +108,7 @@
 		968DBC8F25562B090018BF84 /* Pods.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = Pods.xcodeproj; path = Pods/Pods.xcodeproj; sourceTree = "<group>"; };
 		968DBCA825562B340018BF84 /* GoogleMobileAds.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = GoogleMobileAds.xcframework; path = "Pods/Google-Mobile-Ads-SDK/Frameworks/GoogleMobileAdsFramework-Current/GoogleMobileAds.xcframework"; sourceTree = "<group>"; };
 		968DBCAB25562B5F0018BF84 /* UserMessagingPlatform.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = UserMessagingPlatform.xcframework; path = Pods/GoogleUserMessagingPlatform/Frameworks/Release/UserMessagingPlatform.xcframework; sourceTree = "<group>"; };
+		968DBCB625562BBE0018BF84 /* MOBAdvertising.podspec */ = {isa = PBXFileReference; lastKnownFileType = text; name = MOBAdvertising.podspec; path = ../MOBAdvertising.podspec; sourceTree = "<group>"; };
 		96BE4BDC24EF8DB500082B4A /* AdSupport.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AdSupport.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk/System/Library/Frameworks/AdSupport.framework; sourceTree = DEVELOPER_DIR; };
 		96BE4BE524EF8EE400082B4A /* CoreServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreServices.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk/System/Library/Frameworks/CoreServices.framework; sourceTree = DEVELOPER_DIR; };
 		96C285531E076EFF00481834 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -159,8 +159,8 @@
 		1EAFA0CE1B6039D5001F3D84 = {
 			isa = PBXGroup;
 			children = (
+				968DBCB625562BBE0018BF84 /* MOBAdvertising.podspec */,
 				968DBC8F25562B090018BF84 /* Pods.xcodeproj */,
-				965AA2C11FC08F0700199E7C /* MOBAdvertising.podspec */,
 				96C285511E076EFF00481834 /* Sources */,
 				96C2855B1E076EFF00481834 /* Sources-iOS-only */,
 				97D67C33FC933CC0C4422253 /* Frameworks */,
