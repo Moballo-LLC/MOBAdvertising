@@ -1,0 +1,35 @@
+target 'MOBAdvertising_iOS' do
+  platform :ios, '10.0'
+  use_frameworks!
+  pod 'Google-Mobile-Ads-SDK'
+
+end
+
+post_install do |installer|
+  installer.pods_project.targets.each do |target|
+    target.build_configurations.each do |config|
+      config.build_settings.delete 'IPHONEOS_DEPLOYMENT_TARGET'
+
+      # build active architecture only (Debug build all)
+      config.build_settings['ONLY_ACTIVE_ARCH'] = 'NO'
+
+      config.build_settings['ENABLE_BITCODE'] = 'YES'
+
+      if config.name == 'Release' || config.name == 'Pro'
+          config.build_settings['BITCODE_GENERATION_MODE'] = 'bitcode'
+      else # Debug
+          config.build_settings['BITCODE_GENERATION_MODE'] = 'marker'
+      end
+
+      cflags = config.build_settings['OTHER_CFLAGS'] || ['$(inherited)']
+
+      if config.name == 'Release' || config.name == 'Pro'
+          cflags << '-fembed-bitcode'
+      else # Debug
+          cflags << '-fembed-bitcode-marker'
+      end
+
+      config.build_settings['OTHER_CFLAGS'] = cflags
+    end
+  end
+end
