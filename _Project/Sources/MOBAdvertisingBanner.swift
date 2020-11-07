@@ -6,244 +6,247 @@
 //  Copyright © 2016 CBTech. All rights reserved.
 //
 
-import UIKit
-import GoogleMobileAds
-#if canImport(AppTrackingTransparency)
-import AppTrackingTransparency
-#endif
-import AdSupport
 
-public class MOBAdvertisingBanner: UIViewController, GADBannerViewDelegate {
-    @objc var adUnitID:String!
-    @objc var bannerView:GADBannerView!
-    @objc var borderView:UIView!
-    @objc var backgroundView:UIView!
-    @objc var adLoaded = false
-    @objc var shouldBeShown = false
-    @objc var presentingAd = false
-    @objc var contentController:UIViewController!
-    var frameSavedBannerView:CGRect!
-    var pendingFrameChange = false
-    @objc let DidPresentAd = "com.moballo.advertising.adPresented"
-    @objc let DidUnpresentAd = "com.moballo.advertising.adUnpresented"
-    @objc var testDevices:[String]? = nil
+#if canImport(GoogleMobileAds)
+    import UIKit
+    import GoogleMobileAds
+    #if canImport(AppTrackingTransparency)
+    import AppTrackingTransparency
+    #endif
+    import AdSupport
 
-    override public func viewDidLoad() {
-        super.viewDidLoad()
+    public class MOBAdvertisingBanner: UIViewController, GADBannerViewDelegate {
+        @objc var adUnitID:String!
+        @objc var bannerView:GADBannerView!
+        @objc var borderView:UIView!
+        @objc var backgroundView:UIView!
+        @objc var adLoaded = false
+        @objc var shouldBeShown = false
+        @objc var presentingAd = false
+        @objc var contentController:UIViewController!
+        var frameSavedBannerView:CGRect!
+        var pendingFrameChange = false
+        @objc let DidPresentAd = "com.moballo.advertising.adPresented"
+        @objc let DidUnpresentAd = "com.moballo.advertising.adUnpresented"
+        @objc var testDevices:[String]? = nil
 
-        // Do any additional setup after loading the view.
-    }
-    public init(view content: UIViewController, AdUnitID adUnitIDInit:String, ShouldShowAd showAdsIn: Bool = true, TestAdDevices testDevicesIn: [String]? = nil) {
-        //Show test ads on these explicit devices
-        self.testDevices = testDevicesIn
-        //Show an ad as soon as available
-        self.shouldBeShown = showAdsIn;
-        //Set that no ad loaded yet
-        self.adLoaded = false;
-        //Get ad info from init
-        self.adUnitID = adUnitIDInit
-        //Init Super View Controller
-        super.init(nibName: nil, bundle: nil)
-        //Setup below ad Background View
-        self.backgroundView = UIView()
-        //Setup ad border View
-        self.borderView = UIView()
-        //Setup Ad Banner View
-        self.bannerView = GADBannerView(adSize: kGADAdSizeBanner)
-        self.bannerView.adUnitID = self.adUnitID;
-        self.bannerView.rootViewController = self;
-        self.bannerView.delegate = self
-        //Setup Main View
-        self.contentController = content
-        //Set main view background color
-        if #available(iOS 13.0, *) {
-            self.setBackground(color: UIColor.systemGray6)
-        } else {
-            self.setBackground(color: UIColor.lightGray)
+        override public func viewDidLoad() {
+            super.viewDidLoad()
+
+            // Do any additional setup after loading the view.
         }
-        //Init Google Ads framework
-        GADMobileAds.sharedInstance().start { (status) in
-            //Call Banner Load - ask for an ad
-            self.requestIDFA()
-        }
-    }
-    public func getContentController() -> UIViewController {
-        return self.contentController
-    }
-    public func setBackground(color: UIColor) {
-        DispatchQueue.main.async {
-            self.backgroundView?.backgroundColor = color
-            self.view.backgroundColor = color
-            self.bannerView.backgroundColor = color
-            self.borderView.backgroundColor = color
-        }
-    }
-    private func requestIDFA() {
-        NSLog("adView:ASIdentifierManager Tracking UUID: " + ASIdentifierManager.shared().advertisingIdentifier.uuidString)
-        #if canImport(AppTrackingTransparency)
-            if #available(iOS 14, *) {
-                if(ASIdentifierManager.shared().advertisingIdentifier.uuidString.starts(with: "00000000")) {
-                    ATTrackingManager.requestTrackingAuthorization(completionHandler: { status in
-                        // Tracking authorization completed. Start loading ads here.
-                        if status == ATTrackingManager.AuthorizationStatus.authorized {
-                            NSLog("adView:ASIdentifierManager ATTrackingManager=authorized")
-                        } else if status == ATTrackingManager.AuthorizationStatus.denied {
-                            NSLog("adView:ASIdentifierManager ATTrackingManager=denied")
-                        } else if status == ATTrackingManager.AuthorizationStatus.restricted {
-                            NSLog("adView:ASIdentifierManager ATTrackingManager=restricted")
-                        } else if status == ATTrackingManager.AuthorizationStatus.notDetermined {
-                            NSLog("adView:ASIdentifierManager ATTrackingManager=notDetermined")
-                        } else {
-                            NSLog("adView:ASIdentifierManager ATTrackingManager=UNKNOWN STATE OCCURED")
-                        }
-
-                        self.bannerLoad()
-                    })
-                    return;
-                }
-            }
-        #endif
-        NSLog("adView:ASIdentifierManager skipping requesting tracking permission. ASIdentifierManager.isAdvertisingTrackingEnabled=" + (ASIdentifierManager.shared().isAdvertisingTrackingEnabled ? "Yes" : "No"));
-
-        self.bannerLoad()
-    }
-    private func bannerLoad() {
-        DispatchQueue.main.async {
-            self.bannerView.adSize = GADCurrentOrientationAnchoredAdaptiveBannerAdSizeWithWidth(self.bannerView.frame.size.width);
-            NSLog("adView:requesting ad with width=" + String(Int(self.bannerView.adSize.size.width)))
-            let request = GADRequest()
+        public init(view content: UIViewController, AdUnitID adUnitIDInit:String, ShouldShowAd showAdsIn: Bool = true, TestAdDevices testDevicesIn: [String]? = nil) {
+            //Show test ads on these explicit devices
+            self.testDevices = testDevicesIn
+            //Show an ad as soon as available
+            self.shouldBeShown = showAdsIn;
+            //Set that no ad loaded yet
+            self.adLoaded = false;
+            //Get ad info from init
+            self.adUnitID = adUnitIDInit
+            //Init Super View Controller
+            super.init(nibName: nil, bundle: nil)
+            //Setup below ad Background View
+            self.backgroundView = UIView()
+            //Setup ad border View
+            self.borderView = UIView()
+            //Setup Ad Banner View
+            self.bannerView = GADBannerView(adSize: kGADAdSizeBanner)
+            self.bannerView.adUnitID = self.adUnitID;
+            self.bannerView.rootViewController = self;
+            self.bannerView.delegate = self
+            //Setup Main View
+            self.contentController = content
+            //Set main view background color
             if #available(iOS 13.0, *) {
-                request.scene = self.view.window?.windowScene
+                self.setBackground(color: UIColor.systemGray6)
+            } else {
+                self.setBackground(color: UIColor.lightGray)
             }
-            GADMobileAds.sharedInstance().requestConfiguration.testDeviceIdentifiers = self.testDevices
-            self.bannerView.load(request)
-            self.bannerView.isAutoloadEnabled = true
+            //Init Google Ads framework
+            GADMobileAds.sharedInstance().start { (status) in
+                //Call Banner Load - ask for an ad
+                self.requestIDFA()
+            }
         }
-    }
-    required public init?(coder aDecoder: NSCoder) {
-        super.init(coder: aDecoder)
-    }
-
-    override public func didReceiveMemoryWarning() {
-        super.didReceiveMemoryWarning()
-        // Dispose of any resources that can be recreated.
-    }
-
-
-    override public func viewWillTransition(to size: CGSize, with coordinator: UIViewControllerTransitionCoordinator) {
-        UIView.animate(withDuration: 0.25, animations: ({
-            self.view.setNeedsLayout()
-            self.view.layoutIfNeeded()
-        }))
-
-        if (self.bannerView != nil) {
-            self.adLoaded = false
-            self.pendingFrameChange = true
+        public func getContentController() -> UIViewController {
+            return self.contentController
         }
-        super.viewWillTransition(to: size, with: coordinator)
-    }
-
-    override public func loadView() {
-        let content = UIView(frame: UIScreen.main.bounds)
-        content.addSubview(self.backgroundView)
-        content.addSubview(self.borderView)
-        content.addSubview(self.bannerView)
-        self.addChild(self.contentController)
-        content.addSubview(self.contentController.view)
-        self.contentController.didMove(toParent: self)
-        content.backgroundColor = UIColor.black
-        self.view = content
-    }
-    override public var supportedInterfaceOrientations: UIInterfaceOrientationMask {
-        return self.contentController.supportedInterfaceOrientations
-    }
-
-    override public var preferredInterfaceOrientationForPresentation: UIInterfaceOrientation {
-        return self.contentController.preferredInterfaceOrientationForPresentation
-    }
-
-    override public func viewDidAppear(_ animated: Bool) {
-        super.viewDidAppear(animated)
-        if (!self.view.bounds.equalTo(self.frameSavedBannerView)) {
-            self.reloadStuff()
+        public func setBackground(color: UIColor) {
+            DispatchQueue.main.async {
+                self.backgroundView?.backgroundColor = color
+                self.view.backgroundColor = color
+                self.bannerView.backgroundColor = color
+                self.borderView.backgroundColor = color
+            }
         }
-    }
-    private func reloadStuff() {
-        DispatchQueue.main.async {
-            UIView.animate(withDuration: 0.25, animations: ({
-                self.view.setNeedsLayout()
-                if self.view.window != nil {
-                    self.view.layoutIfNeeded()
+        private func requestIDFA() {
+            NSLog("adView:ASIdentifierManager Tracking UUID: " + ASIdentifierManager.shared().advertisingIdentifier.uuidString)
+            #if canImport(AppTrackingTransparency)
+                if #available(iOS 14, *) {
+                    if(ASIdentifierManager.shared().advertisingIdentifier.uuidString.starts(with: "00000000")) {
+                        ATTrackingManager.requestTrackingAuthorization(completionHandler: { status in
+                            // Tracking authorization completed. Start loading ads here.
+                            if status == ATTrackingManager.AuthorizationStatus.authorized {
+                                NSLog("adView:ASIdentifierManager ATTrackingManager=authorized")
+                            } else if status == ATTrackingManager.AuthorizationStatus.denied {
+                                NSLog("adView:ASIdentifierManager ATTrackingManager=denied")
+                            } else if status == ATTrackingManager.AuthorizationStatus.restricted {
+                                NSLog("adView:ASIdentifierManager ATTrackingManager=restricted")
+                            } else if status == ATTrackingManager.AuthorizationStatus.notDetermined {
+                                NSLog("adView:ASIdentifierManager ATTrackingManager=notDetermined")
+                            } else {
+                                NSLog("adView:ASIdentifierManager ATTrackingManager=UNKNOWN STATE OCCURED")
+                            }
+
+                            self.bannerLoad()
+                        })
+                        return;
+                    }
                 }
-            }))
-        }
-    }
-    @objc public func hideBannerView() {
-        self.shouldBeShown = false;
-        self.reloadStuff()
-    }
-    @objc public func showBannerView() {
-        self.shouldBeShown = true;
-        self.reloadStuff()
-    }
-    public func adViewDidReceiveAd(_ bannerView: GADBannerView) {
-        if(self.pendingFrameChange) {
-            return
-        }
-        self.adLoaded = true
-        NSLog("adViewDidReceiveAd")
-        self.reloadStuff()
-    }
-    public func adView(_ bannerView: GADBannerView, didFailToReceiveAdWithError error: GADRequestError) {
-        NSLog("adView:didFailToReceiveAdWithError: "+error.localizedDescription)
-        self.reloadStuff()
-    }
-    @objc public func isPresentingAd() -> Bool {
-        return presentingAd
-    }
-    override public func viewDidLayoutSubviews() {
-        var contentFrame = self.view.bounds
-        var bannerFrame = CGRect.zero
-        self.frameSavedBannerView = self.view.bounds
-        bannerFrame.size = self.bannerView.sizeThatFits(contentFrame.size)
-        bannerFrame.size.width = self.view.bounds.size.width
-        var backgroundViewFrame = bannerFrame
-        var borderViewFrame = bannerFrame
-        let borderSize = CGFloat(1.0)
-        borderViewFrame.size.height = borderSize
-        var displayShift = bannerFrame.size.height
-        if #available(iOS 11.0, *) {
-            let insets = self.view.safeAreaInsets
-//            bannerFrame.origin.x = insets.left
-//            bannerFrame.size.width -= insets.left
-//            bannerFrame.size.width -= insets.right
-            displayShift += insets.bottom
-        }
+            #endif
+            NSLog("adView:ASIdentifierManager skipping requesting tracking permission. ASIdentifierManager.isAdvertisingTrackingEnabled=" + (ASIdentifierManager.shared().isAdvertisingTrackingEnabled ? "Yes" : "No"));
 
-        // Check if the banner has an ad loaded and ready for display.  Move the banner off
-        // screen if it does not have an ad.
-        if (self.adLoaded && self.shouldBeShown) {
-            contentFrame.size.height -= displayShift - borderSize
-            bannerFrame.origin.y = contentFrame.size.height + borderSize;
-            borderViewFrame.origin.y = contentFrame.size.height;
-            backgroundViewFrame.origin.y = bannerFrame.origin.y
-            backgroundViewFrame.size.height += displayShift
-            NotificationCenter.default.post(name: Notification.Name(rawValue: self.DidPresentAd), object: nil)
-            self.presentingAd = true
-        } else {
-            bannerFrame.origin.y = contentFrame.size.height + borderSize
-            borderViewFrame.origin.y = contentFrame.size.height
-            NotificationCenter.default.post(name: Notification.Name(rawValue: self.DidUnpresentAd), object: nil)
-            self.presentingAd = false
-        }
-        self.contentController.view.frame = contentFrame
-        self.bannerView.frame = bannerFrame
-        self.borderView.frame = borderViewFrame
-        self.backgroundView.frame = backgroundViewFrame
-        self.bannerView.adSize = GADCurrentOrientationAnchoredAdaptiveBannerAdSizeWithWidth(self.bannerView.frame.size.width)
-        if(self.pendingFrameChange) {
-            self.pendingFrameChange = false
             self.bannerLoad()
         }
+        private func bannerLoad() {
+            DispatchQueue.main.async {
+                self.bannerView.adSize = GADCurrentOrientationAnchoredAdaptiveBannerAdSizeWithWidth(self.bannerView.frame.size.width);
+                NSLog("adView:requesting ad with width=" + String(Int(self.bannerView.adSize.size.width)))
+                let request = GADRequest()
+                if #available(iOS 13.0, *) {
+                    request.scene = self.view.window?.windowScene
+                }
+                GADMobileAds.sharedInstance().requestConfiguration.testDeviceIdentifiers = self.testDevices
+                self.bannerView.load(request)
+                self.bannerView.isAutoloadEnabled = true
+            }
+        }
+        required public init?(coder aDecoder: NSCoder) {
+            super.init(coder: aDecoder)
+        }
+
+        override public func didReceiveMemoryWarning() {
+            super.didReceiveMemoryWarning()
+            // Dispose of any resources that can be recreated.
+        }
+
+
+        override public func viewWillTransition(to size: CGSize, with coordinator: UIViewControllerTransitionCoordinator) {
+            UIView.animate(withDuration: 0.25, animations: ({
+                self.view.setNeedsLayout()
+                self.view.layoutIfNeeded()
+            }))
+
+            if (self.bannerView != nil) {
+                self.adLoaded = false
+                self.pendingFrameChange = true
+            }
+            super.viewWillTransition(to: size, with: coordinator)
+        }
+
+        override public func loadView() {
+            let content = UIView(frame: UIScreen.main.bounds)
+            content.addSubview(self.backgroundView)
+            content.addSubview(self.borderView)
+            content.addSubview(self.bannerView)
+            self.addChild(self.contentController)
+            content.addSubview(self.contentController.view)
+            self.contentController.didMove(toParent: self)
+            content.backgroundColor = UIColor.black
+            self.view = content
+        }
+        override public var supportedInterfaceOrientations: UIInterfaceOrientationMask {
+            return self.contentController.supportedInterfaceOrientations
+        }
+
+        override public var preferredInterfaceOrientationForPresentation: UIInterfaceOrientation {
+            return self.contentController.preferredInterfaceOrientationForPresentation
+        }
+
+        override public func viewDidAppear(_ animated: Bool) {
+            super.viewDidAppear(animated)
+            if (!self.view.bounds.equalTo(self.frameSavedBannerView)) {
+                self.reloadStuff()
+            }
+        }
+        private func reloadStuff() {
+            DispatchQueue.main.async {
+                UIView.animate(withDuration: 0.25, animations: ({
+                    self.view.setNeedsLayout()
+                    if self.view.window != nil {
+                        self.view.layoutIfNeeded()
+                    }
+                }))
+            }
+        }
+        @objc public func hideBannerView() {
+            self.shouldBeShown = false;
+            self.reloadStuff()
+        }
+        @objc public func showBannerView() {
+            self.shouldBeShown = true;
+            self.reloadStuff()
+        }
+        public func adViewDidReceiveAd(_ bannerView: GADBannerView) {
+            if(self.pendingFrameChange) {
+                return
+            }
+            self.adLoaded = true
+            NSLog("adViewDidReceiveAd")
+            self.reloadStuff()
+        }
+        public func adView(_ bannerView: GADBannerView, didFailToReceiveAdWithError error: GADRequestError) {
+            NSLog("adView:didFailToReceiveAdWithError: "+error.localizedDescription)
+            self.reloadStuff()
+        }
+        @objc public func isPresentingAd() -> Bool {
+            return presentingAd
+        }
+        override public func viewDidLayoutSubviews() {
+            var contentFrame = self.view.bounds
+            var bannerFrame = CGRect.zero
+            self.frameSavedBannerView = self.view.bounds
+            bannerFrame.size = self.bannerView.sizeThatFits(contentFrame.size)
+            bannerFrame.size.width = self.view.bounds.size.width
+            var backgroundViewFrame = bannerFrame
+            var borderViewFrame = bannerFrame
+            let borderSize = CGFloat(1.0)
+            borderViewFrame.size.height = borderSize
+            var displayShift = bannerFrame.size.height
+            if #available(iOS 11.0, *) {
+                let insets = self.view.safeAreaInsets
+    //            bannerFrame.origin.x = insets.left
+    //            bannerFrame.size.width -= insets.left
+    //            bannerFrame.size.width -= insets.right
+                displayShift += insets.bottom
+            }
+
+            // Check if the banner has an ad loaded and ready for display.  Move the banner off
+            // screen if it does not have an ad.
+            if (self.adLoaded && self.shouldBeShown) {
+                contentFrame.size.height -= displayShift - borderSize
+                bannerFrame.origin.y = contentFrame.size.height + borderSize;
+                borderViewFrame.origin.y = contentFrame.size.height;
+                backgroundViewFrame.origin.y = bannerFrame.origin.y
+                backgroundViewFrame.size.height += displayShift
+                NotificationCenter.default.post(name: Notification.Name(rawValue: self.DidPresentAd), object: nil)
+                self.presentingAd = true
+            } else {
+                bannerFrame.origin.y = contentFrame.size.height + borderSize
+                borderViewFrame.origin.y = contentFrame.size.height
+                NotificationCenter.default.post(name: Notification.Name(rawValue: self.DidUnpresentAd), object: nil)
+                self.presentingAd = false
+            }
+            self.contentController.view.frame = contentFrame
+            self.bannerView.frame = bannerFrame
+            self.borderView.frame = borderViewFrame
+            self.backgroundView.frame = backgroundViewFrame
+            self.bannerView.adSize = GADCurrentOrientationAnchoredAdaptiveBannerAdSizeWithWidth(self.bannerView.frame.size.width)
+            if(self.pendingFrameChange) {
+                self.pendingFrameChange = false
+                self.bannerLoad()
+            }
+        }
     }
-}
+#endif

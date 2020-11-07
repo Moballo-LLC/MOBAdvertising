@@ -27,9 +27,7 @@
 		96894C8C219892EB0072C89F /* SafariServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 96894C8B219892EB0072C89F /* SafariServices.framework */; settings = {ATTRIBUTES = (Weak, ); }; };
 		96894C8E219892F30072C89F /* WebKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 96894C8D219892F30072C89F /* WebKit.framework */; settings = {ATTRIBUTES = (Weak, ); }; };
 		968DBCA925562B340018BF84 /* GoogleMobileAds.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 968DBCA825562B340018BF84 /* GoogleMobileAds.xcframework */; };
-		968DBCAA25562B340018BF84 /* GoogleMobileAds.xcframework in CopyFiles */ = {isa = PBXBuildFile; fileRef = 968DBCA825562B340018BF84 /* GoogleMobileAds.xcframework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		968DBCAC25562B5F0018BF84 /* UserMessagingPlatform.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 968DBCAB25562B5F0018BF84 /* UserMessagingPlatform.xcframework */; };
-		968DBCAD25562B600018BF84 /* UserMessagingPlatform.xcframework in CopyFiles */ = {isa = PBXBuildFile; fileRef = 968DBCAB25562B5F0018BF84 /* UserMessagingPlatform.xcframework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		96BE4BE624EF8EE400082B4A /* CoreServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 96BE4BE524EF8EE400082B4A /* CoreServices.framework */; };
 		96C285641E076EFF00481834 /* MOBAdvertising.h in Headers */ = {isa = PBXBuildFile; fileRef = 96C285551E076EFF00481834 /* MOBAdvertising.h */; };
 		96D37D551F815543009FC1DE /* MOBAdvertisingBanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96D37D521F815407009FC1DE /* MOBAdvertisingBanner.swift */; };
@@ -66,20 +64,6 @@
 			remoteInfo = PromisesObjC;
 		};
 /* End PBXContainerItemProxy section */
-
-/* Begin PBXCopyFilesBuildPhase section */
-		96894C902198961B0072C89F /* CopyFiles */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = "";
-			dstSubfolderSpec = 10;
-			files = (
-				968DBCAD25562B600018BF84 /* UserMessagingPlatform.xcframework in CopyFiles */,
-				968DBCAA25562B340018BF84 /* GoogleMobileAds.xcframework in CopyFiles */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		2D60F371A9C6C502E1D90530 /* Pods_MOBAdvertising_iOS.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_MOBAdvertising_iOS.framework; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -162,7 +146,6 @@
 				968DBCB625562BBE0018BF84 /* MOBAdvertising.podspec */,
 				968DBC8F25562B090018BF84 /* Pods.xcodeproj */,
 				96C285511E076EFF00481834 /* Sources */,
-				96C2855B1E076EFF00481834 /* Sources-iOS-only */,
 				97D67C33FC933CC0C4422253 /* Frameworks */,
 				41313C949AFCD6741F7FDF8B /* Pods */,
 				968DBC8E25562ACE0018BF84 /* MOBAdvertising_iOS.framework */,
@@ -197,13 +180,6 @@
 				96D37D521F815407009FC1DE /* MOBAdvertisingBanner.swift */,
 			);
 			path = Sources;
-			sourceTree = "<group>";
-		};
-		96C2855B1E076EFF00481834 /* Sources-iOS-only */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			path = "Sources-iOS-only";
 			sourceTree = "<group>";
 		};
 		97D67C33FC933CC0C4422253 /* Frameworks */ = {
@@ -263,7 +239,6 @@
 			buildPhases = (
 				A5A22554EF0714CFB59CBEF2 /* [CP] Check Pods Manifest.lock */,
 				1EAFA0D31B6039D5001F3D84 /* Sources */,
-				96894C902198961B0072C89F /* CopyFiles */,
 				1EAFA0D41B6039D5001F3D84 /* Frameworks */,
 				1EAFA0D51B6039D5001F3D84 /* Headers */,
 				1EAFA0D61B6039D5001F3D84 /* Resources */,
@@ -537,7 +512,6 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = YES;
 				APPLICATION_EXTENSION_API_ONLY = YES;
-				ARCHS = arm64;
 				CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES = YES;
 				CLANG_ENABLE_MODULES = YES;
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "";
@@ -590,7 +564,6 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = YES;
 				APPLICATION_EXTENSION_API_ONLY = YES;
-				ARCHS = arm64;
 				CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES = YES;
 				CLANG_ENABLE_MODULES = YES;
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "";
