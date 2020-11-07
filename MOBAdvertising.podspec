@@ -11,7 +11,7 @@ Pod::Spec.new do |s|
     s.pod_target_xcconfig = { 'EXCLUDED_ARCHS[sdk=iphonesimulator*]' => 'arm64', 'EXCLUDED_ARCHS[sdk=iphoneos*]' => 'x86_64' }
     s.user_target_xcconfig = { 'EXCLUDED_ARCHS[sdk=iphonesimulator*]' => 'arm64', 'EXCLUDED_ARCHS[sdk=iphoneos*]' => 'x86_64' }
     s.swift_version = '5.0'
-    s.dependency 'Google-Mobile-Ads-SDK', '~> 7.68'
+    s.dependency 'Google-Mobile-Ads-SDK', '7.67.0'
 
     s.weak_framework = 'UIKit'
     s.weak_framework = 'AVFoundation'
