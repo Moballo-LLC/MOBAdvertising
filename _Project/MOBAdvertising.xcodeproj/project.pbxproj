@@ -86,7 +86,6 @@
 		96894C89219892CA0072C89F /* AdSupport.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AdSupport.framework; path = System/Library/Frameworks/AdSupport.framework; sourceTree = SDKROOT; };
 		96894C8B219892EB0072C89F /* SafariServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SafariServices.framework; path = System/Library/Frameworks/SafariServices.framework; sourceTree = SDKROOT; };
 		96894C8D219892F30072C89F /* WebKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WebKit.framework; path = System/Library/Frameworks/WebKit.framework; sourceTree = SDKROOT; };
-		968DBC8E25562ACE0018BF84 /* MOBAdvertising_iOS.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = MOBAdvertising_iOS.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		968DBC8F25562B090018BF84 /* Pods.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = Pods.xcodeproj; path = Pods/Pods.xcodeproj; sourceTree = "<group>"; };
 		968DBCA825562B340018BF84 /* GoogleMobileAds.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = GoogleMobileAds.xcframework; path = "Pods/Google-Mobile-Ads-SDK/Frameworks/GoogleMobileAdsFramework-Current/GoogleMobileAds.xcframework"; sourceTree = "<group>"; };
 		968DBCAB25562B5F0018BF84 /* UserMessagingPlatform.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = UserMessagingPlatform.xcframework; path = Pods/GoogleUserMessagingPlatform/Frameworks/Release/UserMessagingPlatform.xcframework; sourceTree = "<group>"; };
@@ -102,6 +101,7 @@
 		96C285821E0771AC00481834 /* CoreSpotlight.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreSpotlight.framework; path = System/Library/Frameworks/CoreSpotlight.framework; sourceTree = SDKROOT; };
 		96C285841E0771B100481834 /* MobileCoreServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MobileCoreServices.framework; path = System/Library/Frameworks/MobileCoreServices.framework; sourceTree = SDKROOT; };
 		96D37D521F815407009FC1DE /* MOBAdvertisingBanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MOBAdvertisingBanner.swift; sourceTree = "<group>"; };
+		96DD14FC2556367D00131412 /* MOBAdvertising_iOS.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = MOBAdvertising_iOS.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -144,7 +144,7 @@
 				96C285511E076EFF00481834 /* Sources */,
 				97D67C33FC933CC0C4422253 /* Frameworks */,
 				41313C949AFCD6741F7FDF8B /* Pods */,
-				968DBC8E25562ACE0018BF84 /* MOBAdvertising_iOS.framework */,
+				96DD14FC2556367D00131412 /* MOBAdvertising_iOS.framework */,
 			);
 			sourceTree = "<group>";
 		};
@@ -245,7 +245,7 @@
 			);
 			name = MOBAdvertising_iOS;
 			productName = Kanna;
-			productReference = 968DBC8E25562ACE0018BF84 /* MOBAdvertising_iOS.framework */;
+			productReference = 96DD14FC2556367D00131412 /* MOBAdvertising_iOS.framework */;
 			productType = "com.apple.product-type.framework";
 		};
 /* End PBXNativeTarget section */
