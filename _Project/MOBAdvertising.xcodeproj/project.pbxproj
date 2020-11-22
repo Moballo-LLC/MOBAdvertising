@@ -32,37 +32,6 @@
 		96D37D551F815543009FC1DE /* MOBAdvertisingBanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96D37D521F815407009FC1DE /* MOBAdvertisingBanner.swift */; };
 /* End PBXBuildFile section */
 
-/* Begin PBXContainerItemProxy section */
-		968DBC9925562B090018BF84 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 968DBC8F25562B090018BF84 /* Pods.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = B43874C6CBB50E7134FBEC24BABFE14F;
-			remoteInfo = GoogleUtilities;
-		};
-		968DBC9B25562B090018BF84 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 968DBC8F25562B090018BF84 /* Pods.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = 06FC5C9CF96D60C50FCD47D339C91951;
-			remoteInfo = nanopb;
-		};
-		968DBC9D25562B090018BF84 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 968DBC8F25562B090018BF84 /* Pods.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = 84E8ACA24707EBFAF9546F2AB48535AD;
-			remoteInfo = "Pods-MOBAdvertising_iOS";
-		};
-		968DBC9F25562B090018BF84 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 968DBC8F25562B090018BF84 /* Pods.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = 3347A1AB6546F0A3977529B8F199DC41;
-			remoteInfo = PromisesObjC;
-		};
-/* End PBXContainerItemProxy section */
-
 /* Begin PBXFileReference section */
 		2D60F371A9C6C502E1D90530 /* Pods_MOBAdvertising_iOS.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_MOBAdvertising_iOS.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		4DC8B755CE601827227CE757 /* Pods-MOBAdvertising_iOS.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-MOBAdvertising_iOS.release.xcconfig"; path = "Target Support Files/Pods-MOBAdvertising_iOS/Pods-MOBAdvertising_iOS.release.xcconfig"; sourceTree = "<group>"; };
@@ -86,7 +55,6 @@
 		96894C89219892CA0072C89F /* AdSupport.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AdSupport.framework; path = System/Library/Frameworks/AdSupport.framework; sourceTree = SDKROOT; };
 		96894C8B219892EB0072C89F /* SafariServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SafariServices.framework; path = System/Library/Frameworks/SafariServices.framework; sourceTree = SDKROOT; };
 		96894C8D219892F30072C89F /* WebKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WebKit.framework; path = System/Library/Frameworks/WebKit.framework; sourceTree = SDKROOT; };
-		968DBC8F25562B090018BF84 /* Pods.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = Pods.xcodeproj; path = Pods/Pods.xcodeproj; sourceTree = "<group>"; };
 		968DBCB625562BBE0018BF84 /* MOBAdvertising.podspec */ = {isa = PBXFileReference; lastKnownFileType = text; name = MOBAdvertising.podspec; path = ../MOBAdvertising.podspec; sourceTree = "<group>"; };
 		96BE4BDC24EF8DB500082B4A /* AdSupport.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AdSupport.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk/System/Library/Frameworks/AdSupport.framework; sourceTree = DEVELOPER_DIR; };
 		96BE4BE524EF8EE400082B4A /* CoreServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreServices.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk/System/Library/Frameworks/CoreServices.framework; sourceTree = DEVELOPER_DIR; };
@@ -138,7 +106,6 @@
 			isa = PBXGroup;
 			children = (
 				968DBCB625562BBE0018BF84 /* MOBAdvertising.podspec */,
-				968DBC8F25562B090018BF84 /* Pods.xcodeproj */,
 				96C285511E076EFF00481834 /* Sources */,
 				97D67C33FC933CC0C4422253 /* Frameworks */,
 				41313C949AFCD6741F7FDF8B /* Pods */,
@@ -153,17 +120,6 @@
 				4DC8B755CE601827227CE757 /* Pods-MOBAdvertising_iOS.release.xcconfig */,
 			);
 			path = Pods;
-			sourceTree = "<group>";
-		};
-		968DBC9025562B090018BF84 /* Products */ = {
-			isa = PBXGroup;
-			children = (
-				968DBC9A25562B090018BF84 /* GoogleUtilities.framework */,
-				968DBC9C25562B090018BF84 /* nanopb.framework */,
-				968DBC9E25562B090018BF84 /* Pods_MOBAdvertising_iOS.framework */,
-				968DBCA025562B090018BF84 /* FBLPromises.framework */,
-			);
-			name = Products;
 			sourceTree = "<group>";
 		};
 		96C285511E076EFF00481834 /* Sources */ = {
@@ -272,49 +228,12 @@
 			mainGroup = 1EAFA0CE1B6039D5001F3D84;
 			productRefGroup = 1EAFA0CE1B6039D5001F3D84;
 			projectDirPath = "";
-			projectReferences = (
-				{
-					ProductGroup = 968DBC9025562B090018BF84 /* Products */;
-					ProjectRef = 968DBC8F25562B090018BF84 /* Pods.xcodeproj */;
-				},
-			);
 			projectRoot = "";
 			targets = (
 				1EAFA0D71B6039D5001F3D84 /* MOBAdvertising_iOS */,
 			);
 		};
 /* End PBXProject section */
-
-/* Begin PBXReferenceProxy section */
-		968DBC9A25562B090018BF84 /* GoogleUtilities.framework */ = {
-			isa = PBXReferenceProxy;
-			fileType = wrapper.framework;
-			path = GoogleUtilities.framework;
-			remoteRef = 968DBC9925562B090018BF84 /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
-		968DBC9C25562B090018BF84 /* nanopb.framework */ = {
-			isa = PBXReferenceProxy;
-			fileType = wrapper.framework;
-			path = nanopb.framework;
-			remoteRef = 968DBC9B25562B090018BF84 /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
-		968DBC9E25562B090018BF84 /* Pods_MOBAdvertising_iOS.framework */ = {
-			isa = PBXReferenceProxy;
-			fileType = wrapper.framework;
-			path = Pods_MOBAdvertising_iOS.framework;
-			remoteRef = 968DBC9D25562B090018BF84 /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
-		968DBCA025562B090018BF84 /* FBLPromises.framework */ = {
-			isa = PBXReferenceProxy;
-			fileType = wrapper.framework;
-			path = FBLPromises.framework;
-			remoteRef = 968DBC9F25562B090018BF84 /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
-/* End PBXReferenceProxy section */
 
 /* Begin PBXResourcesBuildPhase section */
 		1EAFA0D61B6039D5001F3D84 /* Resources */ = {
@@ -508,7 +427,7 @@
 				CLANG_ENABLE_MODULES = YES;
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "";
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 6100;
+				CURRENT_PROJECT_VERSION = 6110;
 				DEFINES_MODULE = YES;
 				DEVELOPMENT_TEAM = "";
 				DYLIB_COMPATIBILITY_VERSION = 1;
@@ -523,7 +442,7 @@
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
-				MARKETING_VERSION = 6.1.0;
+				MARKETING_VERSION = 6.1.1;
 				ONLY_ACTIVE_ARCH = NO;
 				OTHER_CFLAGS = (
 					"$(inherited)",
@@ -552,7 +471,7 @@
 				CLANG_ENABLE_MODULES = YES;
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "";
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 6100;
+				CURRENT_PROJECT_VERSION = 6110;
 				DEFINES_MODULE = YES;
 				DEVELOPMENT_TEAM = "";
 				DYLIB_COMPATIBILITY_VERSION = 1;
@@ -568,7 +487,7 @@
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
-				MARKETING_VERSION = 6.1.0;
+				MARKETING_VERSION = 6.1.1;
 				ONLY_ACTIVE_ARCH = NO;
 				OTHER_CFLAGS = (
 					"$(inherited)",

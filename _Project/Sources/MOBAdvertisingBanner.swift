@@ -28,7 +28,8 @@
         var pendingFrameChange = false
         @objc let DidPresentAd = "com.moballo.advertising.adPresented"
         @objc let DidUnpresentAd = "com.moballo.advertising.adUnpresented"
-        @objc var testDevices:[String]? = nil
+        @objc var testDevices:[String] = [String]()
+        @objc var simulatedDevices:[String] = [String]()
 
         override public func viewDidLoad() {
             super.viewDidLoad()
@@ -37,7 +38,11 @@
         }
         public init(view content: UIViewController, AdUnitID adUnitIDInit:String, ShouldShowAd showAdsIn: Bool = true, TestAdDevices testDevicesIn: [String]? = nil) {
             //Show test ads on these explicit devices
-            self.testDevices = testDevicesIn
+            self.testDevices = testDevicesIn ?? [String]()
+            self.simulatedDevices = [String]()
+            if let simulatorStringed = kGADSimulatorID as? String {
+                self.simulatedDevices.append(simulatorStringed)
+            }
             //Show an ad as soon as available
             self.shouldBeShown = showAdsIn;
             //Set that no ad loaded yet
@@ -46,6 +51,8 @@
             self.adUnitID = adUnitIDInit
             //Init Super View Controller
             super.init(nibName: nil, bundle: nil)
+            //Setup Main View
+            self.contentController = content
             //Setup below ad Background View
             self.backgroundView = UIView()
             //Setup ad border View
@@ -55,8 +62,6 @@
             self.bannerView.adUnitID = self.adUnitID;
             self.bannerView.rootViewController = self;
             self.bannerView.delegate = self
-            //Setup Main View
-            self.contentController = content
             //Set main view background color
             if #available(iOS 13.0, *) {
                 self.setBackground(color: UIColor.systemGray6)
@@ -117,7 +122,7 @@
                 if #available(iOS 13.0, *) {
                     request.scene = self.view.window?.windowScene
                 }
-                GADMobileAds.sharedInstance().requestConfiguration.testDeviceIdentifiers = self.testDevices
+                GADMobileAds.sharedInstance().requestConfiguration.testDeviceIdentifiers = self.testDevices + self.simulatedDevices
                 self.bannerView.load(request)
                 self.bannerView.isAutoloadEnabled = true
             }
@@ -215,10 +220,10 @@
             borderViewFrame.size.height = borderSize
             var displayShift = bannerFrame.size.height
             if #available(iOS 11.0, *) {
-                let insets = self.view.safeAreaInsets
-    //            bannerFrame.origin.x = insets.left
-    //            bannerFrame.size.width -= insets.left
-    //            bannerFrame.size.width -= insets.right
+                let insets = self.view.window?.safeAreaInsets ?? self.view.safeAreaInsets
+                bannerFrame.origin.x = insets.left
+                bannerFrame.size.width -= insets.left
+                bannerFrame.size.width -= insets.right
                 displayShift += insets.bottom
             }
 
