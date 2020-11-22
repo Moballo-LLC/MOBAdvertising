@@ -198,6 +198,7 @@
                 return
             }
             self.adLoaded = true
+            self.frameSavedBannerView = CGRect.zero
             NSLog("adViewDidReceiveAd")
             self.reloadStuff()
         }
@@ -248,6 +249,7 @@
             self.borderView.frame = borderViewFrame
             self.backgroundView.frame = backgroundViewFrame
             self.bannerView.adSize = GADCurrentOrientationAnchoredAdaptiveBannerAdSizeWithWidth(self.bannerView.frame.size.width)
+            bannerFrame.origin.x = (contentFrame.size.width - self.bannerView.adSize.size.width) / 2.0
             if(self.pendingFrameChange) {
                 self.pendingFrameChange = false
                 self.bannerLoad()
