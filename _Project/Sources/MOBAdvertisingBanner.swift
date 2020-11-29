@@ -64,9 +64,13 @@
             self.bannerView.delegate = self
             //Set main view background color
             if #available(iOS 13.0, *) {
-                self.setBackground(color: UIColor.systemGray6)
+                self.setBackground(color: UIColor.systemBackground)
+                self.bannerView.backgroundColor = UIColor.systemGray6
+                self.borderView.backgroundColor = UIColor.systemGray6
             } else {
-                self.setBackground(color: UIColor.lightGray)
+                self.setBackground(color: UIColor.white)
+                self.bannerView.backgroundColor = UIColor.lightGray
+                self.borderView.backgroundColor = UIColor.lightGray
             }
             //Init Google Ads framework
             GADMobileAds.sharedInstance().start { (status) in
@@ -78,11 +82,12 @@
             return self.contentController
         }
         public func setBackground(color: UIColor) {
+            self.view.window?.backgroundColor = color
+            self.view.backgroundColor = color
             DispatchQueue.main.async {
                 self.backgroundView?.backgroundColor = color
+                self.view.window?.backgroundColor = color
                 self.view.backgroundColor = color
-                self.bannerView.backgroundColor = color
-                self.borderView.backgroundColor = color
             }
         }
         private func requestIDFA() {
