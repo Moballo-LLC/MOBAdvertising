@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
     s.name             = 'MOBAdvertising'
-    s.version          = '7.0.0'
+    s.version          = '7.0.1'
     s.summary          = 'A wrapper for GogleMobileAds that allows one to present banner ads that show with any application, including a tab bar application'
     s.homepage         = 'https://github.com/Moballo-LLC/MOBAdvertising'
     s.license          = 'MIT'
