@@ -30,23 +30,26 @@
         @objc let DidUnpresentAd = "com.moballo.advertising.adUnpresented"
         @objc var testDevices:[String] = [String]()
         @objc var simulatedDevices:[String] = [String]()
+        @objc var shouldRequestTrackingIDFA:Bool = false
 
         override public func viewDidLoad() {
             super.viewDidLoad()
 
             // Do any additional setup after loading the view.
         }
-        public init(view content: UIViewController, AdUnitID adUnitIDInit:String, ShouldShowAd showAdsIn: Bool = true, TestAdDevices testDevicesIn: [String]? = nil) {
+        public init(view content: UIViewController, AdUnitID adUnitIDInit:String, ShouldShowAd showAdsIn: Bool = true, TestAdDevices testDevicesIn: [String]? = nil, shouldRequestTrackingIDFA: Bool = true) {
             //Show test ads on these explicit devices
             self.testDevices = testDevicesIn ?? [String]()
             self.simulatedDevices = [String]()
             if let simulatorStringed = kGADSimulatorID as? String {
                 self.simulatedDevices.append(simulatorStringed)
             }
+            //Request IDFA Access usually
+            self.shouldRequestTrackingIDFA = shouldRequestTrackingIDFA
             //Show an ad as soon as available
-            self.shouldBeShown = showAdsIn;
+            self.shouldBeShown = showAdsIn
             //Set that no ad loaded yet
-            self.adLoaded = false;
+            self.adLoaded = false
             //Get ad info from init
             self.adUnitID = adUnitIDInit
             //Init Super View Controller
@@ -91,6 +94,12 @@
             }
         }
         private func requestIDFA() {
+            if(!shouldRequestTrackingIDFA) {
+                self.bannerLoad()
+                NSLog("adView:ASIdentifierManager NOT REQUESTING IDFA ACCESS")
+                return
+            }
+
             NSLog("adView:ASIdentifierManager Tracking UUID: " + ASIdentifierManager.shared().advertisingIdentifier.uuidString)
             #if canImport(AppTrackingTransparency)
                 if #available(iOS 14, *) {
@@ -198,17 +207,17 @@
             self.shouldBeShown = true;
             self.reloadStuff()
         }
-        public func adViewDidReceiveAd(_ bannerView: GADBannerView) {
+        public func bannerViewDidReceiveAd(_ bannerView: GADBannerView) {
             if(self.pendingFrameChange) {
                 return
             }
             self.adLoaded = true
             self.frameSavedBannerView = CGRect.zero
-            NSLog("adViewDidReceiveAd")
+            NSLog("bannerViewDidReceiveAd")
             self.reloadStuff()
         }
         public func adView(_ bannerView: GADBannerView, didFailToReceiveAdWithError error: GADRequestError) {
-            NSLog("adView:didFailToReceiveAdWithError: "+error.localizedDescription)
+            NSLog("bannerView:didFailToReceiveAdWithError: "+error.localizedDescription)
             self.reloadStuff()
         }
         @objc public func isPresentingAd() -> Bool {
