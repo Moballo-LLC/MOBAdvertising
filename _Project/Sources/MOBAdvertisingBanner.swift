@@ -216,7 +216,7 @@
             NSLog("bannerViewDidReceiveAd")
             self.reloadStuff()
         }
-        public func adView(_ bannerView: GADBannerView, didFailToReceiveAdWithError error: GADRequestError) {
+        public func adView(_ bannerView: GADBannerView, didFailToReceiveAdWithError error: NSError) {
             NSLog("bannerView:didFailToReceiveAdWithError: "+error.localizedDescription)
             self.reloadStuff()
         }
