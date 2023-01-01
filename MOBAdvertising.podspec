@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
     s.name             = 'MOBAdvertising'
-    s.version          = '8.0.0'
+    s.version          = '8.0.1'
     s.summary          = 'A wrapper for GogleMobileAds that allows one to present banner ads that show with any application, including a tab bar application'
     s.homepage         = 'https://github.com/Moballo-LLC/MOBAdvertising'
     s.license          = 'MIT'
@@ -11,7 +11,7 @@ Pod::Spec.new do |s|
     s.pod_target_xcconfig = { 'EXCLUDED_ARCHS[sdk=iphonesimulator*]' => 'arm64', 'EXCLUDED_ARCHS[sdk=iphoneos*]' => 'x86_64' }
     s.user_target_xcconfig = { 'EXCLUDED_ARCHS[sdk=iphonesimulator*]' => 'arm64', 'EXCLUDED_ARCHS[sdk=iphoneos*]' => 'x86_64' }
     s.swift_version = '5.0'
-    s.dependency 'Google-Mobile-Ads-SDK', '~> 8.0'
+    s.dependency 'Google-Mobile-Ads-SDK', '~> 9.14'
 
     s.static_framework = true
 
