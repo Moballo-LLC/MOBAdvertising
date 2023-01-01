@@ -41,7 +41,7 @@
             //Show test ads on these explicit devices
             self.testDevices = testDevicesIn ?? [String]()
             self.simulatedDevices = [String]()
-            if let simulatorStringed = kGADSimulatorID as? String {
+            if let simulatorStringed = GADSimulatorID as? String {
                 self.simulatedDevices.append(simulatorStringed)
             }
             //Request IDFA Access usually
@@ -61,7 +61,7 @@
             //Setup ad border View
             self.borderView = UIView()
             //Setup Ad Banner View
-            self.bannerView = GADBannerView(adSize: kGADAdSizeBanner)
+            self.bannerView = GADBannerView(adSize: GADAdSizeBanner)
             self.bannerView.adUnitID = self.adUnitID;
             self.bannerView.rootViewController = self;
             self.bannerView.delegate = self
