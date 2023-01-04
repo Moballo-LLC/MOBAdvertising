@@ -103,7 +103,7 @@
             NSLog("adView:ASIdentifierManager Tracking UUID: " + ASIdentifierManager.shared().advertisingIdentifier.uuidString)
             #if canImport(AppTrackingTransparency)
                 if #available(iOS 14, *) {
-                    if(ASIdentifierManager.shared().advertisingIdentifier.uuidString.starts(with: "00000000")) {
+                    if(ATTrackingManager.trackingAuthorizationStatus == .notDetermined || ASIdentifierManager.shared().advertisingIdentifier.uuidString.starts(with: "00000000")) {
                         ATTrackingManager.requestTrackingAuthorization(completionHandler: { status in
                             // Tracking authorization completed. Start loading ads here.
                             if status == ATTrackingManager.AuthorizationStatus.authorized {
