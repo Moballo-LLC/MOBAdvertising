@@ -103,7 +103,16 @@
             NSLog("adView:ASIdentifierManager Tracking UUID: " + ASIdentifierManager.shared().advertisingIdentifier.uuidString)
             #if canImport(AppTrackingTransparency)
                 if #available(iOS 14, *) {
-                    if(ATTrackingManager.trackingAuthorizationStatus == .notDetermined || ASIdentifierManager.shared().advertisingIdentifier.uuidString.starts(with: "00000000")) {
+                    //Guard for application not yet being active
+                    if(UIApplication.shared.applicationState != .active) {
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5, execute: {
+                            self.requestIDFA()
+                        })
+                        return;
+                    }
+
+                    //Request authorization
+                    if(ATTrackingManager.trackingAuthorizationStatus == .notDetermined) {
                         ATTrackingManager.requestTrackingAuthorization(completionHandler: { status in
                             // Tracking authorization completed. Start loading ads here.
                             if status == ATTrackingManager.AuthorizationStatus.authorized {
@@ -118,13 +127,23 @@
                                 NSLog("adView:ASIdentifierManager ATTrackingManager=UNKNOWN STATE OCCURED")
                             }
 
+                            //Check for failed check for tracking advertising
+                            if(status == .notDetermined) {
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5, execute: {
+                                    self.requestIDFA()
+                                })
+                                return;
+                            }
+
                             self.bannerLoad()
                         })
                         return;
                     }
+                    
                 }
             #endif
             NSLog("adView:ASIdentifierManager skipping requesting tracking permission. ASIdentifierManager.isAdvertisingTrackingEnabled=" + (ASIdentifierManager.shared().isAdvertisingTrackingEnabled ? "Yes" : "No"));
+            
 
             self.bannerLoad()
         }
