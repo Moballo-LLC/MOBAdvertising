@@ -355,7 +355,9 @@ public final class MOBAdvertisingBanner: UIViewController, BannerViewDelegate {
     private func beginAuthorizationIfNeeded() {
         guard shouldBeShown, isViewVisible else { return }
         if authorizationComplete {
-            loadBannerIfPossible()
+            if !adLoaded || pendingAdLoad {
+                loadBannerIfPossible()
+            }
             return
         }
         guard !authorizationStarted else { return }

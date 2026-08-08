@@ -29,6 +29,12 @@ assert 'Configured Moballo banner; demo=' in source
 assert 'Moballo banner loaded successfully' in source
 assert 'retryableFailure' in source
 assert 'authorizationRetryAttempts < 3' in source
+assert '''if authorizationComplete {
+            if !adLoaded || pendingAdLoad {
+                loadBannerIfPossible()
+            }
+            return
+        }''' in source
 assert 'sharedTrackingRetryAttempts < 3' in source
 assert 'UIApplication.didBecomeActiveNotification' in source
 assert 'bannerRetryAttempts < 5' in source
