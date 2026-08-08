@@ -259,8 +259,7 @@ public final class MOBAdvertisingBanner: UIViewController, BannerViewDelegate {
     @objc public func isPresentingAd() -> Bool { presentingAd }
 
     public var shouldOfferPrivacyOptions: Bool {
-        authorizationComplete
-            && ConsentInformation.shared.privacyOptionsRequirementStatus == .required
+        ConsentInformation.shared.privacyOptionsRequirementStatus == .required
     }
 
     public func presentPrivacyOptions(from presenter: UIViewController) {
