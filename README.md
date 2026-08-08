@@ -1,54 +1,68 @@
 # MOBAdvertising
-MOBAdvertising is an easy-to-use, drop-in wrapper for Google AdMob Banner Ads. Simply wrap your app in MOBAdvertising to display ads on the bottom in a jiffy.
-***
-## Import with CocoaPods
-```
-  use_frameworks!
-  pod 'MOBAdvertising'
-```
-***
-## Initialization and Setup
-### Info.plist
-- Define `GADApplicationIdentifier` to be your app's GAD Application Identifier
-- Add and customize the following keys:
-```
-<key>NSUserTrackingUsageDescription</key>
-<string>This app is expensive to develop and distribute. We rely on personalized advertising to gain sufficient revenue to continue development and support.</string>
-<key>SKAdNetworkItems</key>
-  <array>
-    <dict>
-      <key>SKAdNetworkIdentifier</key>
-      <string>cstr6suwn9.skadnetwork</string>
-    </dict>
-  </array> <key>NSAppTransportSecurity</key>
-<dict>
-    <key>NSAllowsArbitraryLoads</key>
-    <true/>
-    <key>NSAllowsArbitraryLoadsForMedia</key>
-    <true/>
-    <key>NSAllowsArbitraryLoadsInWebContent</key>
-    <true/>
-</dict>
-```
-### AppDelegate.swift
-#### At the top of the file
-```
-import MOBAdvertising
-var bannerViewControllered: MOBAdvertisingBanner!
-```
-#### Inside of "application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplicationLaunchOptionsKey: Any]?) -> Bool"
-```
-bannerViewControllered = MOBAdvertisingBanner(view: (self.window?.rootViewController)!, AdUnitID: "YOUR ADMOB AD UNIT ID", ShouldShowAd: true, TestAdDevices: [String]?)
-self.window!.rootViewController = bannerViewControllered;
-self.window?.makeKeyAndVisible()
-```
-***
-## To Show/Hide Ads
-```
-bannerViewControllered.hideBannerView()
-or
-bannerViewControllered.showBannerView()
-```
-***
-Easy as pie! Enjoy!
 
+MOBAdvertising is a UIKit wrapper for consent-gated, anchored adaptive Google
+Mobile Ads banners. Version 9 requires iOS 13 or later and coordinates UMP,
+App Tracking Transparency, Mobile Ads startup, and banner loading in that order.
+
+## CocoaPods
+
+```ruby
+use_frameworks!
+pod 'MOBAdvertising', '9.0.0'
+```
+
+## Host configuration
+
+Add the app's production Google Mobile Ads application identifier to its
+`Info.plist`:
+
+```xml
+<key>GADApplicationIdentifier</key>
+<string>ca-app-pub-…~…</string>
+```
+
+If the app requests tracking authorization, add an accurate
+`NSUserTrackingUsageDescription`. Keep Google's current SKAdNetwork inventory
+in the host app when the app uses attribution. MOBAdvertising does not require
+arbitrary-load ATS exceptions; do not add them for the SDK.
+
+Publish the appropriate UMP consent and privacy-options messages in AdMob. The
+SDK cannot create that server-side configuration.
+
+## App setup
+
+```swift
+import MOBAdvertising
+
+private var bannerController: MOBAdvertisingBanner?
+
+func installBanner(around contentController: UIViewController) {
+    let controller = MOBAdvertisingBanner(
+        view: contentController,
+        AdUnitID: "YOUR PRODUCTION BANNER UNIT ID"
+    )
+    bannerController = controller
+    window?.rootViewController = controller
+    window?.makeKeyAndVisible()
+}
+```
+
+Debug and Simulator builds use Google's anchored-adaptive demo unit. A physical
+Release build uses the supplied production unit unless its launch environment
+contains `MOBALLO_USE_TEST_ADS=1`. Interact with a creative only after it is
+visibly labeled as a test ad.
+
+## Visibility and privacy options
+
+```swift
+bannerController?.hideBannerView()
+bannerController?.showBannerView()
+
+if bannerController?.shouldOfferPrivacyOptions == true {
+    bannerController?.presentPrivacyOptions(from: presentingViewController)
+}
+```
+
+Failed consent refreshes fail closed and retry while an active banner remains
+requested. Interrupted ATT prompts and transient banner failures use bounded
+retries; hiding the banner cancels pending per-banner retry work.
