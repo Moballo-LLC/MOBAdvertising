@@ -47,6 +47,7 @@ public final class MOBAdvertisingBanner: UIViewController, BannerViewDelegate {
     private var authorizationRetryAttempts = 0
     private var authorizationRetryScheduled = false
     private var bannerRequestInFlight = false
+    private var requestedBannerWidth: CGFloat?
     private var pendingAdLoad = false
     private var bannerRetryAttempts = 0
     private var bannerRetryWorkItem: DispatchWorkItem?
@@ -269,6 +270,15 @@ public final class MOBAdvertisingBanner: UIViewController, BannerViewDelegate {
 
     public func bannerViewDidReceiveAd(_ bannerView: BannerView) {
         bannerRequestInFlight = false
+        guard requestedWidthMatchesCurrentLayout else {
+            requestedBannerWidth = nil
+            adLoaded = false
+            pendingAdLoad = shouldBeShown
+            reloadLayout()
+            loadBannerIfPossible()
+            return
+        }
+        requestedBannerWidth = nil
         guard shouldBeShown,
               authorizationComplete,
               ConsentInformation.shared.canRequestAds else {
@@ -290,6 +300,15 @@ public final class MOBAdvertisingBanner: UIViewController, BannerViewDelegate {
 
     public func bannerView(_ bannerView: BannerView, didFailToReceiveAdWithError error: Error) {
         bannerRequestInFlight = false
+        if !requestedWidthMatchesCurrentLayout {
+            requestedBannerWidth = nil
+            adLoaded = false
+            pendingAdLoad = shouldBeShown
+            reloadLayout()
+            loadBannerIfPossible()
+            return
+        }
+        requestedBannerWidth = nil
         pendingAdLoad = false
         adLoaded = false
         bannerView.isAutoloadEnabled = false
@@ -517,6 +536,7 @@ public final class MOBAdvertisingBanner: UIViewController, BannerViewDelegate {
 
         pendingAdLoad = false
         bannerRequestInFlight = true
+        requestedBannerWidth = availableWidth
         bannerView.adSize = largeAnchoredAdaptiveBanner(width: availableWidth)
         bannerView.isAutoloadEnabled = false
         MobileAds.shared.requestConfiguration.testDeviceIdentifiers = testDevices
@@ -525,6 +545,13 @@ public final class MOBAdvertisingBanner: UIViewController, BannerViewDelegate {
             request.scene = view.window?.windowScene
         }
         bannerView.load(request)
+    }
+
+    private var requestedWidthMatchesCurrentLayout: Bool {
+        guard let requestedBannerWidth else { return false }
+        let safeInsets = view.window?.safeAreaInsets ?? view.safeAreaInsets
+        let currentWidth = max(0, view.bounds.width - safeInsets.left - safeInsets.right)
+        return abs(requestedBannerWidth - currentWidth) < 0.5
     }
 
     private static func observeNextSharedApplicationActivation() {
