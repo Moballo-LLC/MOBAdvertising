@@ -25,6 +25,8 @@ public final class MOBAdvertisingBanner: UIViewController, BannerViewDelegate {
     private static var sharedConsentComplete = false
     private static var sharedConsentInFlight = false
     private static var sharedConsentWaiters: [(Bool, Bool) -> Void] = []
+    private static weak var sharedConsentPresenter: UIViewController?
+    private static var sharedConsentDidBecomeActiveObserver: NSObjectProtocol?
     private static var sharedTrackingComplete = false
     private static var sharedTrackingInFlight = false
     private static var sharedTrackingWaiters: [() -> Void] = []
@@ -409,24 +411,59 @@ public final class MOBAdvertisingBanner: UIViewController, BannerViewDelegate {
                     )
                     return
                 }
-                ConsentForm.loadAndPresentIfRequired(from: presenter) { formError in
-                    DispatchQueue.main.async {
-                        #if DEBUG
-                        if let formError {
-                            NSLog("Unable to present advertising consent: \(formError.localizedDescription)")
-                        }
-                        #endif
-                        finishSharedConsent(
-                            allowed: formError == nil && ConsentInformation.shared.canRequestAds,
-                            retryableFailure: formError != nil
-                        )
-                    }
-                }
+                presentSharedConsentFormWhenActive(from: presenter)
             }
         }
     }
 
+    private static func presentSharedConsentFormWhenActive(from presenter: UIViewController) {
+        guard UIApplication.shared.applicationState == .active else {
+            sharedConsentPresenter = presenter
+            observeNextSharedConsentApplicationActivation()
+            return
+        }
+
+        sharedConsentPresenter = nil
+        stopObservingSharedConsentApplicationActivation()
+        ConsentForm.loadAndPresentIfRequired(from: presenter) { formError in
+            DispatchQueue.main.async {
+                #if DEBUG
+                if let formError {
+                    NSLog("Unable to present advertising consent: \(formError.localizedDescription)")
+                }
+                #endif
+                finishSharedConsent(
+                    allowed: formError == nil && ConsentInformation.shared.canRequestAds,
+                    retryableFailure: formError != nil
+                )
+            }
+        }
+    }
+
+    private static func observeNextSharedConsentApplicationActivation() {
+        guard sharedConsentDidBecomeActiveObserver == nil else { return }
+        sharedConsentDidBecomeActiveObserver = NotificationCenter.default.addObserver(
+            forName: UIApplication.didBecomeActiveNotification,
+            object: nil,
+            queue: .main
+        ) { _ in
+            guard let presenter = sharedConsentPresenter else {
+                finishSharedConsent(allowed: false, retryableFailure: true)
+                return
+            }
+            presentSharedConsentFormWhenActive(from: presenter)
+        }
+    }
+
+    private static func stopObservingSharedConsentApplicationActivation() {
+        guard let observer = sharedConsentDidBecomeActiveObserver else { return }
+        NotificationCenter.default.removeObserver(observer)
+        sharedConsentDidBecomeActiveObserver = nil
+    }
+
     private static func finishSharedConsent(allowed: Bool, retryableFailure: Bool) {
+        stopObservingSharedConsentApplicationActivation()
+        sharedConsentPresenter = nil
         sharedConsentInFlight = false
         sharedConsentComplete = !retryableFailure
         let waiters = sharedConsentWaiters
@@ -580,6 +617,7 @@ public final class MOBAdvertisingBanner: UIViewController, BannerViewDelegate {
     private func replaceBannerView() {
         bannerRetryWorkItem?.cancel()
         bannerRetryWorkItem = nil
+        bannerRetryAttempts = 0
         bannerRequestInFlight = false
         requestedBannerWidth = nil
         adLoaded = false

@@ -37,6 +37,10 @@ assert '''if authorizationComplete {
         }''' in source
 assert 'sharedTrackingRetryAttempts < 3' in source
 assert 'UIApplication.didBecomeActiveNotification' in source
+assert 'presentSharedConsentFormWhenActive(from: presenter)' in source
+assert 'sharedConsentDidBecomeActiveObserver' in source
+assert 'guard UIApplication.shared.applicationState == .active else' in source
+assert 'stopObservingSharedConsentApplicationActivation()' in source
 assert 'bannerRetryAttempts < 5' in source
 assert 'scheduleBannerRetryIfNeeded()' in source
 assert 'guard self.shouldBeShown, self.isViewVisible' in source
@@ -51,6 +55,7 @@ assert '''public var shouldOfferPrivacyOptions: Bool {
         ConsentInformation.shared.privacyOptionsRequirementStatus == .required
     }''' in source
 assert 'bannerView.delegate = nil' in source
+assert 'bannerRetryAttempts = 0' in source
 assert 'bannerView = BannerView(adSize: AdSizeBanner)' in source
 assert source.count('guard bannerView === self.bannerView else { return }') == 2
 assert 'lastLaidOutAvailableWidth = availableWidth' in source
