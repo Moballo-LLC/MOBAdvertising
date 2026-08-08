@@ -16,6 +16,9 @@ public final class MOBAdvertisingBanner: UIViewController, BannerViewDelegate {
     private enum NotificationName {
         static let didPresent = Notification.Name("com.moballo.advertising.adPresented")
         static let didUnpresent = Notification.Name("com.moballo.advertising.adUnpresented")
+        static let privacyChoicesDidChange = Notification.Name(
+            "com.moballo.advertising.privacyChoicesDidChange"
+        )
     }
 
     private static let googleDemoBannerAdUnitID = "ca-app-pub-3940256099942544/2435281174"
@@ -72,6 +75,12 @@ public final class MOBAdvertisingBanner: UIViewController, BannerViewDelegate {
         super.init(nibName: nil, bundle: nil)
 
         configureBannerView()
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(privacyChoicesDidChange),
+            name: NotificationName.privacyChoicesDidChange,
+            object: nil
+        )
         #if DEBUG
         NSLog("Configured Moballo banner; demo=\(bannerView.adUnitID == Self.googleDemoBannerAdUnitID)")
         #endif
@@ -256,20 +265,27 @@ public final class MOBAdvertisingBanner: UIViewController, BannerViewDelegate {
 
     public func presentPrivacyOptions(from presenter: UIViewController) {
         guard shouldOfferPrivacyOptions else { return }
-        ConsentForm.presentPrivacyOptionsForm(from: presenter) { [weak self] error in
+        ConsentForm.presentPrivacyOptionsForm(from: presenter) { error in
             DispatchQueue.main.async {
                 #if DEBUG
                 if let error {
                     NSLog("Unable to present advertising privacy options: \(error.localizedDescription)")
                 }
                 #endif
-                guard let self else { return }
-                self.replaceBannerView()
-                self.pendingAdLoad = self.shouldBeShown
-                self.reloadLayout()
-                self.loadBannerIfPossible()
+                guard error == nil else { return }
+                NotificationCenter.default.post(
+                    name: NotificationName.privacyChoicesDidChange,
+                    object: nil
+                )
             }
         }
+    }
+
+    @objc private func privacyChoicesDidChange() {
+        replaceBannerView()
+        pendingAdLoad = shouldBeShown
+        reloadLayout()
+        loadBannerIfPossible()
     }
 
     public func bannerViewDidReceiveAd(_ bannerView: BannerView) {

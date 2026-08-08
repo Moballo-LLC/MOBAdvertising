@@ -36,7 +36,11 @@ assert 'scheduleBannerRetryIfNeeded()' in source
 assert 'guard self.shouldBeShown, self.isViewVisible' in source
 assert 'requestedBannerWidth = availableWidth' in source
 assert 'requestedWidthMatchesCurrentLayout' in source
-assert 'self.replaceBannerView()' in source
+assert 'replaceBannerView()' in source
+assert 'NotificationName.privacyChoicesDidChange' in source
+assert 'selector: #selector(privacyChoicesDidChange)' in source
+assert 'name: NotificationName.privacyChoicesDidChange' in source
+assert '@objc private func privacyChoicesDidChange()' in source
 assert 'bannerView.delegate = nil' in source
 assert 'bannerView = BannerView(adSize: AdSizeBanner)' in source
 assert source.count('guard bannerView === self.bannerView else { return }') == 2
