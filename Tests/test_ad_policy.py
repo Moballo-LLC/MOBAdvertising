@@ -36,6 +36,13 @@ assert 'scheduleBannerRetryIfNeeded()' in source
 assert 'guard self.shouldBeShown, self.isViewVisible' in source
 assert 'requestedBannerWidth = availableWidth' in source
 assert 'requestedWidthMatchesCurrentLayout' in source
+assert 'self.replaceBannerView()' in source
+assert 'bannerView.delegate = nil' in source
+assert 'bannerView = BannerView(adSize: AdSizeBanner)' in source
+assert source.count('guard bannerView === self.bannerView else { return }') == 2
+assert 'lastLaidOutAvailableWidth = availableWidth' in source
+assert 'availableWidthChanged' in source
+assert 'previousBounds?.width != view.bounds.width' not in source
 assert "Google-Mobile-Ads-SDK', '13.6.0'" in spec
 assert "GoogleUserMessagingPlatform', '3.1.0'" in spec
 assert 'ios => "13.0"' in spec

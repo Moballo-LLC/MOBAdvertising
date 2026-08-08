@@ -33,7 +33,8 @@ public final class MOBAdvertisingBanner: UIViewController, BannerViewDelegate {
     private static var sharedMobileAdsStartWaiters: [() -> Void] = []
 
     private let contentController: UIViewController
-    private let bannerView = BannerView(adSize: AdSizeBanner)
+    private var bannerView = BannerView(adSize: AdSizeBanner)
+    private let bannerAdUnitID: String
     private let backgroundView = UIView()
     private let borderView = UIView()
     private let testDevices: [String]
@@ -52,6 +53,7 @@ public final class MOBAdvertisingBanner: UIViewController, BannerViewDelegate {
     private var bannerRetryAttempts = 0
     private var bannerRetryWorkItem: DispatchWorkItem?
     private var lastLaidOutBounds: CGRect?
+    private var lastLaidOutAvailableWidth: CGFloat?
     private var isViewVisible = false
 
     public init(
@@ -65,13 +67,11 @@ public final class MOBAdvertisingBanner: UIViewController, BannerViewDelegate {
         shouldBeShown = shouldShowAd
         testDevices = testAdDevices ?? []
         shouldRequestTrackingAuthorization = shouldRequestTrackingIDFA
+        bannerAdUnitID = Self.runtimeBannerAdUnitID(productionAdUnitID)
 
         super.init(nibName: nil, bundle: nil)
 
-        bannerView.adUnitID = Self.runtimeBannerAdUnitID(productionAdUnitID)
-        bannerView.rootViewController = self
-        bannerView.delegate = self
-        bannerView.isAutoloadEnabled = false
+        configureBannerView()
         #if DEBUG
         NSLog("Configured Moballo banner; demo=\(bannerView.adUnitID == Self.googleDemoBannerAdUnitID)")
         #endif
@@ -148,12 +148,20 @@ public final class MOBAdvertisingBanner: UIViewController, BannerViewDelegate {
 
     public override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
-        let previousBounds = lastLaidOutBounds
         lastLaidOutBounds = view.bounds
 
         let borderSize = CGFloat(1)
         let safeInsets = view.window?.safeAreaInsets ?? view.safeAreaInsets
         let availableWidth = max(0, view.bounds.width - safeInsets.left - safeInsets.right)
+        let previousAvailableWidth = lastLaidOutAvailableWidth
+        lastLaidOutAvailableWidth = availableWidth
+        let availableWidthChanged = previousAvailableWidth.map {
+            abs($0 - availableWidth) >= 0.5
+        } ?? false
+        if availableWidthChanged {
+            adLoaded = false
+            pendingAdLoad = shouldBeShown
+        }
         guard availableWidth > 0 else {
             contentController.view.frame = view.bounds
             setPresentingAd(false)
@@ -196,11 +204,7 @@ public final class MOBAdvertisingBanner: UIViewController, BannerViewDelegate {
         borderView.frame = borderFrame
         backgroundView.frame = backgroundFrame
 
-        if previousBounds?.width != view.bounds.width || pendingAdLoad {
-            if previousBounds?.width != view.bounds.width {
-                adLoaded = false
-                pendingAdLoad = shouldBeShown
-            }
+        if availableWidthChanged || pendingAdLoad {
             loadBannerIfPossible()
         }
     }
@@ -260,7 +264,7 @@ public final class MOBAdvertisingBanner: UIViewController, BannerViewDelegate {
                 }
                 #endif
                 guard let self else { return }
-                self.adLoaded = false
+                self.replaceBannerView()
                 self.pendingAdLoad = self.shouldBeShown
                 self.reloadLayout()
                 self.loadBannerIfPossible()
@@ -269,6 +273,7 @@ public final class MOBAdvertisingBanner: UIViewController, BannerViewDelegate {
     }
 
     public func bannerViewDidReceiveAd(_ bannerView: BannerView) {
+        guard bannerView === self.bannerView else { return }
         bannerRequestInFlight = false
         guard requestedWidthMatchesCurrentLayout else {
             requestedBannerWidth = nil
@@ -299,6 +304,7 @@ public final class MOBAdvertisingBanner: UIViewController, BannerViewDelegate {
     }
 
     public func bannerView(_ bannerView: BannerView, didFailToReceiveAdWithError error: Error) {
+        guard bannerView === self.bannerView else { return }
         bannerRequestInFlight = false
         if !requestedWidthMatchesCurrentLayout {
             requestedBannerWidth = nil
@@ -545,6 +551,29 @@ public final class MOBAdvertisingBanner: UIViewController, BannerViewDelegate {
             request.scene = view.window?.windowScene
         }
         bannerView.load(request)
+    }
+
+    private func configureBannerView() {
+        bannerView.adUnitID = bannerAdUnitID
+        bannerView.rootViewController = self
+        bannerView.delegate = self
+        bannerView.isAutoloadEnabled = false
+    }
+
+    private func replaceBannerView() {
+        bannerRetryWorkItem?.cancel()
+        bannerRetryWorkItem = nil
+        bannerRequestInFlight = false
+        requestedBannerWidth = nil
+        adLoaded = false
+
+        bannerView.delegate = nil
+        bannerView.removeFromSuperview()
+        bannerView = BannerView(adSize: AdSizeBanner)
+        configureBannerView()
+        if isViewLoaded {
+            view.insertSubview(bannerView, belowSubview: contentController.view)
+        }
     }
 
     private var requestedWidthMatchesCurrentLayout: Bool {
