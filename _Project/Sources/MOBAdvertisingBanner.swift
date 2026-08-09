@@ -286,7 +286,13 @@ public final class MOBAdvertisingBanner: UIViewController, BannerViewDelegate {
         replaceBannerView()
         pendingAdLoad = shouldBeShown
         reloadLayout()
-        loadBannerIfPossible()
+        if authorizationComplete {
+            loadBannerIfPossible()
+        } else {
+            authorizationRetryAttempts = 0
+            authorizationRetryScheduled = false
+            beginAuthorizationIfNeeded()
+        }
     }
 
     public func bannerViewDidReceiveAd(_ bannerView: BannerView) {

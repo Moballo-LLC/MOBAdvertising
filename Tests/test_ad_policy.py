@@ -51,6 +51,13 @@ assert 'NotificationName.privacyChoicesDidChange' in source
 assert 'selector: #selector(privacyChoicesDidChange)' in source
 assert 'name: NotificationName.privacyChoicesDidChange' in source
 assert '@objc private func privacyChoicesDidChange()' in source
+assert '''if authorizationComplete {
+            loadBannerIfPossible()
+        } else {
+            authorizationRetryAttempts = 0
+            authorizationRetryScheduled = false
+            beginAuthorizationIfNeeded()
+        }''' in source
 assert '''public var shouldOfferPrivacyOptions: Bool {
         ConsentInformation.shared.privacyOptionsRequirementStatus == .required
     }''' in source
