@@ -1,15 +1,16 @@
 Pod::Spec.new do |s|
     s.name             = 'MOBAdvertising'
-    s.version          = '8.0.4'
-    s.summary          = 'A wrapper for GogleMobileAds that allows one to present banner ads that show with any application, including a tab bar application'
+    s.version          = '9.0.0'
+    s.summary          = 'Consent-gated adaptive Google Mobile Ads banners for UIKit applications'
     s.homepage         = 'https://github.com/Moballo-LLC/MOBAdvertising'
     s.license          = 'MIT'
     s.author           = { 'Jason Morcos - Moballo, LLC' => 'jason.morcos@moballo.com' }
     s.source           = { :git => 'https://github.com/Moballo-LLC/MOBAdvertising.git', :tag => s.version.to_s }
 
-    s.platforms = { :ios => "10.0" }
+    s.platforms = { :ios => "13.0" }
     s.swift_version = '5.0'
-    s.dependency 'Google-Mobile-Ads-SDK', '~> 9.14'
+    s.dependency 'Google-Mobile-Ads-SDK', '13.6.0'
+    s.dependency 'GoogleUserMessagingPlatform', '3.1.0'
 
     s.static_framework = true
 
