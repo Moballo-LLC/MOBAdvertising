@@ -83,6 +83,12 @@ public final class MOBAdvertisingBanner: UIViewController, BannerViewDelegate {
             name: NotificationName.privacyChoicesDidChange,
             object: nil
         )
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(applicationDidBecomeActive),
+            name: UIApplication.didBecomeActiveNotification,
+            object: nil
+        )
         #if DEBUG
         NSLog("Configured Moballo banner; demo=\(bannerView.adUnitID == Self.googleDemoBannerAdUnitID)")
         #endif
@@ -291,6 +297,17 @@ public final class MOBAdvertisingBanner: UIViewController, BannerViewDelegate {
         } else {
             authorizationRetryAttempts = 0
             authorizationRetryScheduled = false
+            beginAuthorizationIfNeeded()
+        }
+    }
+
+    @objc private func applicationDidBecomeActive() {
+        guard shouldBeShown, isViewVisible else { return }
+        if authorizationComplete {
+            if !adLoaded || pendingAdLoad {
+                loadBannerIfPossible()
+            }
+        } else {
             beginAuthorizationIfNeeded()
         }
     }
@@ -587,6 +604,7 @@ public final class MOBAdvertisingBanner: UIViewController, BannerViewDelegate {
     private func loadBannerIfPossible() {
         guard shouldBeShown,
               isViewVisible,
+              UIApplication.shared.applicationState == .active,
               authorizationComplete,
               ConsentInformation.shared.canRequestAds,
               !bannerRequestInFlight,
@@ -679,6 +697,7 @@ public final class MOBAdvertisingBanner: UIViewController, BannerViewDelegate {
               bannerRetryWorkItem == nil,
               shouldBeShown,
               isViewVisible,
+              UIApplication.shared.applicationState == .active,
               authorizationComplete,
               ConsentInformation.shared.canRequestAds else {
             return

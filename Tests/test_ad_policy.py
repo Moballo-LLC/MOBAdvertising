@@ -51,6 +51,15 @@ assert 'NotificationName.privacyChoicesDidChange' in source
 assert 'selector: #selector(privacyChoicesDidChange)' in source
 assert 'name: NotificationName.privacyChoicesDidChange' in source
 assert '@objc private func privacyChoicesDidChange()' in source
+assert 'selector: #selector(applicationDidBecomeActive)' in source
+assert '@objc private func applicationDidBecomeActive()' in source
+assert source.count('UIApplication.shared.applicationState == .active') >= 3
+assert '''if !adLoaded || pendingAdLoad {
+                loadBannerIfPossible()
+            }
+        } else {
+            beginAuthorizationIfNeeded()
+        }''' in source
 assert '''if authorizationComplete {
             loadBannerIfPossible()
         } else {
