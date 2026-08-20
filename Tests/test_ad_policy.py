@@ -115,25 +115,29 @@ assert '''let mode: AdServingMode = ConsentInformation.shared.canRequestAds
 assert 'finishSharedConsent(mode: mode, retryableFailure: false)' in source
 assert 'private static func finishSharedConsentWithCurrentDecision(' in source
 assert 'invalidatingInFlight: Bool = false' in source
+current_decision = source.split('private static func finishSharedConsentWithCurrentDecision(', 1)[1].split('private func scheduleAuthorizationRetry()', 1)[0]
+assert 'let shouldBroadcastDecision = invalidatingInFlight || sharedConsentMode == .limited' in current_decision
+assert 'name: NotificationName.privacyChoicesDidChange' in current_decision
+assert current_decision.index('finishSharedConsent(mode: mode, retryableFailure: false)') < current_decision.index('name: NotificationName.privacyChoicesDidChange')
 assert '''case .unavailable:
                 self.authorizationStarted = false
                 self.authorizationComplete = true''' in source
 assert '''case .unavailable:
                 self.pendingAdLoad = false''' in source
-assert 'A successful UMP denial is global.' in source
 assert '''case .currentConsent:
                 self.authorizationRetryAttempts = 0''' in source
-assert source.count('name: NotificationName.privacyChoicesDidChange') >= 2
-assert 'Every live banner must leave its local limited mode together.' in source
+assert source.count('name: NotificationName.privacyChoicesDidChange') == 2
 privacy_options = source.split('public func presentPrivacyOptions(from presenter: UIViewController)', 1)[1].split('@objc private func privacyChoicesDidChange()', 1)[0]
 assert 'guard error == nil else' in privacy_options
 assert 'Self.activateLimitedAdFallback()' not in privacy_options
 assert 'Self.finishSharedConsentWithCurrentDecision(invalidatingInFlight: true)' in privacy_options
+assert 'name: NotificationName.privacyChoicesDidChange' not in privacy_options
 assert 'Self.invalidateSharedConsentDecision()' not in privacy_options
 assert privacy_options.index('guard error == nil else') < privacy_options.index('Self.finishSharedConsentWithCurrentDecision(invalidatingInFlight: true)')
 limited_refresh = source.split('private func refreshConsentWhileServingLimited()', 1)[1].split('private func requestTrackingIfNeeded', 1)[0]
 assert 'guard !authorizationStarted else {\n            // A state transition can race the delayed callback.' in limited_refresh
 assert 'authorizationRetryAttempts = max(0, authorizationRetryAttempts - 1)' in limited_refresh
+assert 'name: NotificationName.privacyChoicesDidChange' not in limited_refresh
 assert '''public var shouldOfferPrivacyOptions: Bool {
         ConsentInformation.shared.privacyOptionsRequirementStatus == .required
     }''' in source

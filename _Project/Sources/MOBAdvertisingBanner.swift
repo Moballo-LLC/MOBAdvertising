@@ -305,10 +305,6 @@ public final class MOBAdvertisingBanner: UIViewController, BannerViewDelegate {
                 // a second network update could fail and must not replace this
                 // authoritative result with the transient limited fallback.
                 Self.finishSharedConsentWithCurrentDecision(invalidatingInFlight: true)
-                NotificationCenter.default.post(
-                    name: NotificationName.privacyChoicesDidChange,
-                    object: nil
-                )
             }
         }
     }
@@ -592,6 +588,7 @@ public final class MOBAdvertisingBanner: UIViewController, BannerViewDelegate {
     private static func finishSharedConsentWithCurrentDecision(
         invalidatingInFlight: Bool = false
     ) {
+        let shouldBroadcastDecision = invalidatingInFlight || sharedConsentMode == .limited
         if invalidatingInFlight {
             sharedConsentGeneration += 1
         }
@@ -600,6 +597,16 @@ public final class MOBAdvertisingBanner: UIViewController, BannerViewDelegate {
             ? .currentConsent
             : .unavailable
         finishSharedConsent(mode: mode, retryableFailure: false)
+        if shouldBroadcastDecision {
+            // Recovery and Privacy Choices publish their authoritative shared
+            // decision independently of whichever controller initiated the
+            // request. Every remaining banner must leave stale limited mode,
+            // even if the initiating controller was deallocated mid-request.
+            NotificationCenter.default.post(
+                name: NotificationName.privacyChoicesDidChange,
+                object: nil
+            )
+        }
     }
 
     private func scheduleAuthorizationRetry() {
@@ -681,23 +688,9 @@ public final class MOBAdvertisingBanner: UIViewController, BannerViewDelegate {
                 self.adLoaded = false
                 self.reloadLayout()
                 self.authorizationRetryAttempts = 0
-                // A successful UMP denial is global. Reset every live banner
-                // through the shared authoritative decision so no controller
-                // can retain a stale local limited mode.
-                NotificationCenter.default.post(
-                    name: NotificationName.privacyChoicesDidChange,
-                    object: nil
-                )
                 return
             case .currentConsent:
                 self.authorizationRetryAttempts = 0
-                // Every live banner must leave its local limited mode together.
-                // Re-enter through the shared decision so a successful denial
-                // also withdraws any banner owned by another controller.
-                NotificationCenter.default.post(
-                    name: NotificationName.privacyChoicesDidChange,
-                    object: nil
-                )
                 return
             }
         }
