@@ -23,12 +23,33 @@ assert 'ca-app-pub-3940256099942544/2435281174' in source
 assert '#elseif targetEnvironment(simulator)' in source
 assert 'bannerView.isAutoloadEnabled = false' in source
 assert 'ConsentInformation.shared.canRequestAds' in source
-assert 'allowed: false,\n                        retryableFailure: true' in source
-assert 'allowed: formError == nil && ConsentInformation.shared.canRequestAds' in source
+assert 'googleConsentForCookiesKey = "gad_has_consent_for_cookies"' in source
+assert 'UserDefaults.standard.set(0, forKey: googleConsentForCookiesKey)' in source
+assert 'UserDefaults.standard.removeObject(forKey: googleConsentForCookiesKey)' in source
+assert 'finishSharedConsent(mode: .limited, retryableFailure: true)' in source
+assert 'finishSharedConsent(mode: mode, retryableFailure: false)' in source
+assert 'private enum AdServingMode' in source
+assert 'case currentConsent' in source
+assert 'case limited' in source
+assert 'case unavailable' in source
+assert 'private var isAdServingPermitted: Bool' in source
+assert '''case .limited:
+            return true
+        case .currentConsent:
+            return ConsentInformation.shared.canRequestAds
+        case .unavailable:
+            return false''' in source
+assert source.count('isAdServingPermitted') >= 4
 assert 'Configured Moballo banner; demo=' in source
 assert 'Moballo banner loaded successfully' in source
 assert 'retryableFailure' in source
 assert 'authorizationRetryAttempts < 3' in source
+assert 'refreshConsentWhileServingLimited()' in source
+assert 'guard adServingMode == .limited' in source
+assert 'if !self.authorizationComplete {' in source
+assert 'self.startMobileAds(generation: generation)' in source
+assert 'authorizationGeneration += 1' in source
+assert source.count('self.authorizationGeneration == generation') >= 3
 assert '''if authorizationComplete {
             if !adLoaded || pendingAdLoad {
                 loadBannerIfPossible()
@@ -60,13 +81,23 @@ assert '''if !adLoaded || pendingAdLoad {
         } else {
             beginAuthorizationIfNeeded()
         }''' in source
-assert '''if authorizationComplete {
-            loadBannerIfPossible()
-        } else {
-            authorizationRetryAttempts = 0
-            authorizationRetryScheduled = false
-            beginAuthorizationIfNeeded()
-        }''' in source
+assert '''authorizationStarted = false
+        authorizationComplete = false
+        adServingMode = nil
+        authorizationGeneration += 1
+        authorizationRetryAttempts = 0
+        authorizationRetryScheduled = false''' in source
+assert '''let mode: AdServingMode = ConsentInformation.shared.canRequestAds
+                    ? .currentConsent
+                    : .unavailable''' in source
+assert 'finishSharedConsent(mode: mode, retryableFailure: false)' in source
+assert '''case .unavailable:
+                self.authorizationStarted = false
+                self.authorizationComplete = true''' in source
+assert '''case .currentConsent, .unavailable:
+                self.authorizationRetryAttempts = 0''' in source
+assert source.count('name: NotificationName.privacyChoicesDidChange') >= 2
+assert 'Every live banner must leave its local limited mode together.' in source
 assert '''public var shouldOfferPrivacyOptions: Bool {
         ConsentInformation.shared.privacyOptionsRequirementStatus == .required
     }''' in source
@@ -85,14 +116,19 @@ assert "pod 'Google-Mobile-Ads-SDK', '13.6.0'" in podfile
 assert "pod 'GoogleUserMessagingPlatform', '3.1.0'" in podfile
 assert 'Google-Mobile-Ads-SDK (13.6.0)' in lockfile
 assert 'GoogleUserMessagingPlatform (3.1.0)' in lockfile
-assert project.count('CURRENT_PROJECT_VERSION = 9000;') == 2
-assert project.count('MARKETING_VERSION = 9.0.0;') == 2
+assert project.count('CURRENT_PROJECT_VERSION = 9001;') == 2
+assert project.count('MARKETING_VERSION = 9.0.1;') == 2
 assert 'IPHONEOS_DEPLOYMENT_TARGET = 10.0;' not in project
 assert 'FRAMEWORK_SEARCH_PATHS = "";' not in project
 assert 'HEADER_SEARCH_PATHS = "";' not in project
 assert 'OTHER_LDFLAGS = "";' not in project
 assert '<string>6.0</string>' in info_plist
-assert "pod 'MOBAdvertising', '9.0.0'" in readme
+assert "pod 'MOBAdvertising', '9.0.1'" in readme
 assert 'MOBALLO_USE_TEST_ADS=1' in readme
 assert 'does not require\narbitrary-load ATS exceptions' in readme
+assert 'request limited\n  ads' in readme
+assert 'successful UMP flow is authoritative' in readme
+assert '`canRequestAds == false`' in readme
+assert "paid/ad-free entitlement is absolute" in readme
+assert "Never use production inventory for QA" in readme
 print("MOBAdvertising consent and demo-routing policy passed")
