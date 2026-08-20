@@ -46,6 +46,13 @@ assert 'retryableFailure' in source
 assert 'authorizationRetryAttempts < 3' in source
 assert 'refreshConsentWhileServingLimited()' in source
 assert 'guard adServingMode == .limited' in source
+assert 'acceptExistingLimitedFallback: Bool = true' in source
+assert 'if acceptExistingLimitedFallback, sharedConsentMode == .limited' in source
+assert 'acceptExistingLimitedFallback: false' in source
+assert 'authorizationRetryAttempts = max(0, authorizationRetryAttempts - 1)' in source
+assert '''if adServingMode == .limited {
+                scheduleAuthorizationRetry()
+            }''' in source
 assert 'if !self.authorizationComplete {' in source
 assert 'self.startMobileAds(generation: generation)' in source
 assert '''case .limited:

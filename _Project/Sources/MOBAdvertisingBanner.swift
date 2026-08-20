@@ -318,6 +318,9 @@ public final class MOBAdvertisingBanner: UIViewController, BannerViewDelegate {
     @objc private func applicationDidBecomeActive() {
         guard shouldBeShown, isViewVisible else { return }
         if authorizationComplete {
+            if adServingMode == .limited {
+                scheduleAuthorizationRetry()
+            }
             if !adLoaded || pendingAdLoad {
                 loadBannerIfPossible()
             }
@@ -439,8 +442,15 @@ public final class MOBAdvertisingBanner: UIViewController, BannerViewDelegate {
 
     private static func requestSharedConsent(
         from presenter: UIViewController,
+        acceptExistingLimitedFallback: Bool = true,
         completion: @escaping (AdServingMode, Bool) -> Void
     ) {
+        // A transient fallback is immediately usable by a newly visible
+        // banner. Consent recovery explicitly bypasses this fast path below.
+        if acceptExistingLimitedFallback, sharedConsentMode == .limited {
+            completion(.limited, true)
+            return
+        }
         if sharedConsentComplete, let sharedConsentMode {
             completion(sharedConsentMode, false)
             return
@@ -562,14 +572,22 @@ public final class MOBAdvertisingBanner: UIViewController, BannerViewDelegate {
     }
 
     private func refreshConsentWhileServingLimited() {
-        guard adServingMode == .limited,
-              shouldBeShown,
-              isViewVisible,
-              !authorizationStarted else { return }
+        guard adServingMode == .limited else { return }
+        guard shouldBeShown, isViewVisible else {
+            // The delayed work fired after the banner left the screen. Keep
+            // that attempt available; beginAuthorizationIfNeeded() resumes it
+            // when this controller is visible again.
+            authorizationRetryAttempts = max(0, authorizationRetryAttempts - 1)
+            return
+        }
+        guard !authorizationStarted else { return }
         authorizationStarted = true
         authorizationGeneration += 1
         let generation = authorizationGeneration
-        Self.requestSharedConsent(from: self) { [weak self] mode, retryableFailure in
+        Self.requestSharedConsent(
+            from: self,
+            acceptExistingLimitedFallback: false
+        ) { [weak self] mode, retryableFailure in
             guard let self, self.authorizationGeneration == generation else { return }
             self.authorizationStarted = false
             self.adServingMode = mode
