@@ -27,9 +27,6 @@ assert 'googleConsentForCookiesKey = "gad_has_consent_for_cookies"' in source
 assert 'UserDefaults.standard.set(0, forKey: googleConsentForCookiesKey)' in source
 assert 'UserDefaults.standard.removeObject(forKey: googleConsentForCookiesKey)' in source
 assert 'finishSharedConsentAfterTransientFailure()' in source
-assert '''guard ConsentInformation.shared.canRequestAds else {
-            clearLimitedAdFallback()
-            finishSharedConsent(mode: .unavailable, retryableFailure: true)''' in source
 assert 'finishSharedConsent(mode: .limited, retryableFailure: true)' in source
 assert 'finishSharedConsent(mode: mode, retryableFailure: false)' in source
 assert 'private enum AdServingMode' in source
@@ -48,14 +45,13 @@ assert 'Configured Moballo banner; demo=' in source
 assert 'Moballo banner loaded successfully' in source
 assert 'retryableFailure' in source
 assert 'authorizationRetryAttempts < 3' in source
-assert 'refreshConsentAfterRetryableFailure()' in source
-assert '''guard !Self.sharedConsentComplete,
-              adServingMode == .limited || adServingMode == .unavailable''' in source
+assert 'refreshConsentWhileServingLimited()' in source
+assert 'guard adServingMode == .limited' in source
 assert 'acceptExistingLimitedFallback: Bool = true' in source
 assert 'if acceptExistingLimitedFallback, sharedConsentMode == .limited' in source
 assert 'acceptExistingLimitedFallback: false' in source
 assert 'authorizationRetryAttempts = max(0, authorizationRetryAttempts - 1)' in source
-assert source.count('adServingMode == .limited || adServingMode == .unavailable') >= 3
+assert source.count('if adServingMode == .limited {') >= 2
 assert 'if !Self.sharedMobileAdsStarted {' in source
 assert 'self.startMobileAds(generation: generation)' in source
 assert '''case .limited:
@@ -66,8 +62,7 @@ assert '''self.authorizationStarted = false
 assert 'authorizationGeneration += 1' in source
 assert source.count('self.authorizationGeneration == generation') >= 3
 assert '''if authorizationComplete {
-            if !Self.sharedConsentComplete,
-               adServingMode == .limited || adServingMode == .unavailable {
+            if adServingMode == .limited {
                 scheduleAuthorizationRetry()
             }
             if !adLoaded || pendingAdLoad {
@@ -115,6 +110,7 @@ assert '''case .unavailable:
                 self.authorizationComplete = true''' in source
 assert '''case .unavailable:
                 self.pendingAdLoad = false''' in source
+assert 'A successful UMP denial is global.' in source
 assert '''case .currentConsent:
                 self.authorizationRetryAttempts = 0''' in source
 assert source.count('name: NotificationName.privacyChoicesDidChange') >= 2

@@ -320,8 +320,7 @@ public final class MOBAdvertisingBanner: UIViewController, BannerViewDelegate {
     @objc private func applicationDidBecomeActive() {
         guard shouldBeShown, isViewVisible else { return }
         if authorizationComplete {
-            if !Self.sharedConsentComplete,
-               adServingMode == .limited || adServingMode == .unavailable {
+            if adServingMode == .limited {
                 scheduleAuthorizationRetry()
             }
             if !adLoaded || pendingAdLoad {
@@ -399,8 +398,7 @@ public final class MOBAdvertisingBanner: UIViewController, BannerViewDelegate {
     private func beginAuthorizationIfNeeded() {
         guard shouldBeShown, isViewVisible else { return }
         if authorizationComplete {
-            if !Self.sharedConsentComplete,
-               adServingMode == .limited || adServingMode == .unavailable {
+            if adServingMode == .limited {
                 scheduleAuthorizationRetry()
             }
             if !adLoaded || pendingAdLoad {
@@ -430,13 +428,9 @@ public final class MOBAdvertisingBanner: UIViewController, BannerViewDelegate {
             case .unavailable:
                 self.authorizationStarted = false
                 self.authorizationComplete = true
+                self.authorizationRetryAttempts = 0
                 self.pendingAdLoad = false
                 self.adLoaded = false
-                if retryableFailure {
-                    self.scheduleAuthorizationRetry()
-                } else {
-                    self.authorizationRetryAttempts = 0
-                }
                 self.reloadLayout()
                 return
             case .currentConsent:
@@ -556,15 +550,9 @@ public final class MOBAdvertisingBanner: UIViewController, BannerViewDelegate {
     }
 
     private static func finishSharedConsentAfterTransientFailure() {
-        // The limited-ad signal chooses a privacy-preserving serving mode; it
-        // cannot override UMP's request gate. Reuse a cached eligible decision
-        // when possible, otherwise remain unavailable while bounded recovery
-        // continues.
-        guard ConsentInformation.shared.canRequestAds else {
-            clearLimitedAdFallback()
-            finishSharedConsent(mode: .unavailable, retryableFailure: true)
-            return
-        }
+        // Google's documented global limited-ad signal is the deliberate
+        // fallback when the current UMP update or required form cannot finish.
+        // A completed UMP flow remains authoritative and is handled separately.
         activateLimitedAdFallback()
         finishSharedConsent(mode: .limited, retryableFailure: true)
     }
@@ -581,8 +569,7 @@ public final class MOBAdvertisingBanner: UIViewController, BannerViewDelegate {
     private func scheduleAuthorizationRetry() {
         guard authorizationRetryAttempts < 3,
               !authorizationRetryScheduled,
-              !Self.sharedConsentComplete,
-              adServingMode == .limited || adServingMode == .unavailable,
+              adServingMode == .limited,
               shouldBeShown,
               isViewVisible else { return }
         authorizationRetryAttempts += 1
@@ -591,13 +578,12 @@ public final class MOBAdvertisingBanner: UIViewController, BannerViewDelegate {
         DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
             guard let self else { return }
             self.authorizationRetryScheduled = false
-            self.refreshConsentAfterRetryableFailure()
+            self.refreshConsentWhileServingLimited()
         }
     }
 
-    private func refreshConsentAfterRetryableFailure() {
-        guard !Self.sharedConsentComplete,
-              adServingMode == .limited || adServingMode == .unavailable else { return }
+    private func refreshConsentWhileServingLimited() {
+        guard adServingMode == .limited else { return }
         guard shouldBeShown, isViewVisible else {
             // The delayed work fired after the banner left the screen. Keep
             // that attempt available; beginAuthorizationIfNeeded() resumes it
@@ -637,11 +623,10 @@ public final class MOBAdvertisingBanner: UIViewController, BannerViewDelegate {
                 self.pendingAdLoad = false
                 self.adLoaded = false
                 self.reloadLayout()
-                if retryableFailure {
-                    self.scheduleAuthorizationRetry()
-                    return
-                }
                 self.authorizationRetryAttempts = 0
+                // A successful UMP denial is global. Reset every live banner
+                // through the shared authoritative decision so no controller
+                // can retain a stale local limited mode.
                 NotificationCenter.default.post(
                     name: NotificationName.privacyChoicesDidChange,
                     object: nil
