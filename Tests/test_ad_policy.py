@@ -148,6 +148,7 @@ assert "pod 'MOBAdvertising', '9.0.1'" in readme
 assert 'MOBALLO_USE_TEST_ADS=1' in readme
 assert 'does not require\narbitrary-load ATS exceptions' in readme
 assert 'request limited\n  ads' in readme
+assert 'Do not gate this error-only manual LTD path on a stale `canRequestAds`' in readme
 assert 'successful UMP flow is authoritative' in readme
 assert '`canRequestAds == false`' in readme
 assert "paid/ad-free entitlement is absolute" in readme

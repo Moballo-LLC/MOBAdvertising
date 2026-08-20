@@ -71,8 +71,10 @@ if bannerController?.shouldOfferPrivacyOptions == true {
   Google's current decision choose the highest-value eligible serving mode.
 - If the UMP update or required form cannot complete, set Google's documented
   `gad_has_consent_for_cookies` signal to `0`, skip ATT, and request limited
-  ads. Continue bounded UMP recovery attempts without withdrawing an already
-  eligible limited banner.
+  ads. Do not gate this error-only manual LTD path on a stale `canRequestAds`
+  value; that value becomes authoritative after the current UMP flow completes
+  successfully. Continue bounded UMP recovery attempts without withdrawing an
+  already eligible limited banner.
 - A successful UMP flow is authoritative. If it completes with
   `canRequestAds == false`, remove any manual limited-ad override and do not
   request ads until the user changes their privacy choices.
