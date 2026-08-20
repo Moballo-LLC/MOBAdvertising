@@ -46,6 +46,7 @@ assert 'Moballo banner loaded successfully' in source
 assert 'retryableFailure' in source
 assert 'authorizationRetryAttempts < 3' in source
 assert 'authorizationRetryWorkItem == nil' in source
+assert '!authorizationStarted' in source.split('private func scheduleAuthorizationRetry()', 1)[1].split('private func cancelAuthorizationRetry', 1)[0]
 assert 'self.authorizationRetryGeneration == retryGeneration' in source
 assert 'private func cancelAuthorizationRetry(preservingAttempt: Bool)' in source
 assert 'authorizationRetryWorkItem?.cancel()' in source
@@ -106,9 +107,10 @@ assert '''authorizationStarted = false
         authorizationRetryAttempts = 0
         cancelAuthorizationRetry(preservingAttempt: false)''' in source
 assert '''let mode: AdServingMode = ConsentInformation.shared.canRequestAds
-                    ? .currentConsent
-                    : .unavailable''' in source
+            ? .currentConsent
+            : .unavailable''' in source
 assert 'finishSharedConsent(mode: mode, retryableFailure: false)' in source
+assert 'private static func finishSharedConsentWithCurrentDecision()' in source
 assert '''case .unavailable:
                 self.authorizationStarted = false
                 self.authorizationComplete = true''' in source
@@ -122,7 +124,12 @@ assert 'Every live banner must leave its local limited mode together.' in source
 privacy_options = source.split('public func presentPrivacyOptions(from presenter: UIViewController)', 1)[1].split('@objc private func privacyChoicesDidChange()', 1)[0]
 assert 'guard error == nil else' in privacy_options
 assert 'Self.activateLimitedAdFallback()' not in privacy_options
-assert privacy_options.index('guard error == nil else') < privacy_options.index('Self.invalidateSharedConsentDecision()')
+assert 'Self.finishSharedConsentWithCurrentDecision()' in privacy_options
+assert 'Self.invalidateSharedConsentDecision()' not in privacy_options
+assert privacy_options.index('guard error == nil else') < privacy_options.index('Self.finishSharedConsentWithCurrentDecision()')
+limited_refresh = source.split('private func refreshConsentWhileServingLimited()', 1)[1].split('private func requestTrackingIfNeeded', 1)[0]
+assert 'guard !authorizationStarted else {\n            // A state transition can race the delayed callback.' in limited_refresh
+assert 'authorizationRetryAttempts = max(0, authorizationRetryAttempts - 1)' in limited_refresh
 assert '''public var shouldOfferPrivacyOptions: Bool {
         ConsentInformation.shared.privacyOptionsRequirementStatus == .required
     }''' in source

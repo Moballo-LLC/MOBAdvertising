@@ -299,7 +299,11 @@ public final class MOBAdvertisingBanner: UIViewController, BannerViewDelegate {
                     // authoritative unavailable decision.
                     return
                 }
-                Self.invalidateSharedConsentDecision()
+                // The completed Privacy Choices form has already updated UMP.
+                // Publish that current decision before resetting controllers;
+                // a second network update could fail and must not replace this
+                // authoritative result with the transient limited fallback.
+                Self.finishSharedConsentWithCurrentDecision()
                 NotificationCenter.default.post(
                     name: NotificationName.privacyChoicesDidChange,
                     object: nil
@@ -503,11 +507,7 @@ public final class MOBAdvertisingBanner: UIViewController, BannerViewDelegate {
                     return
                 }
 
-                clearLimitedAdFallback()
-                let mode: AdServingMode = ConsentInformation.shared.canRequestAds
-                    ? .currentConsent
-                    : .unavailable
-                finishSharedConsent(mode: mode, retryableFailure: false)
+                finishSharedConsentWithCurrentDecision()
             }
         }
     }
@@ -565,14 +565,18 @@ public final class MOBAdvertisingBanner: UIViewController, BannerViewDelegate {
         UserDefaults.standard.removeObject(forKey: googleConsentForCookiesKey)
     }
 
-    private static func invalidateSharedConsentDecision() {
-        sharedConsentComplete = false
-        sharedConsentMode = nil
+    private static func finishSharedConsentWithCurrentDecision() {
+        clearLimitedAdFallback()
+        let mode: AdServingMode = ConsentInformation.shared.canRequestAds
+            ? .currentConsent
+            : .unavailable
+        finishSharedConsent(mode: mode, retryableFailure: false)
     }
 
     private func scheduleAuthorizationRetry() {
         guard authorizationRetryAttempts < 3,
               authorizationRetryWorkItem == nil,
+              !authorizationStarted,
               adServingMode == .limited,
               shouldBeShown,
               isViewVisible else { return }
@@ -609,7 +613,13 @@ public final class MOBAdvertisingBanner: UIViewController, BannerViewDelegate {
             authorizationRetryAttempts = max(0, authorizationRetryAttempts - 1)
             return
         }
-        guard !authorizationStarted else { return }
+        guard !authorizationStarted else {
+            // A state transition can race the delayed callback. This timer did
+            // not start a UMP request, so return its slot to the bounded budget;
+            // the active request will schedule the next retry if still needed.
+            authorizationRetryAttempts = max(0, authorizationRetryAttempts - 1)
+            return
+        }
         authorizationStarted = true
         authorizationGeneration += 1
         let generation = authorizationGeneration
