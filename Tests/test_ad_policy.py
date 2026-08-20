@@ -23,13 +23,53 @@ assert 'ca-app-pub-3940256099942544/2435281174' in source
 assert '#elseif targetEnvironment(simulator)' in source
 assert 'bannerView.isAutoloadEnabled = false' in source
 assert 'ConsentInformation.shared.canRequestAds' in source
-assert 'allowed: false,\n                        retryableFailure: true' in source
-assert 'allowed: formError == nil && ConsentInformation.shared.canRequestAds' in source
+assert 'googleConsentForCookiesKey = "gad_has_consent_for_cookies"' in source
+assert 'UserDefaults.standard.set(0, forKey: googleConsentForCookiesKey)' in source
+assert 'UserDefaults.standard.removeObject(forKey: googleConsentForCookiesKey)' in source
+assert 'finishSharedConsentAfterTransientFailure()' in source
+assert 'finishSharedConsent(mode: .limited, retryableFailure: true)' in source
+assert 'finishSharedConsent(mode: mode, retryableFailure: false)' in source
+assert 'private enum AdServingMode' in source
+assert 'case currentConsent' in source
+assert 'case limited' in source
+assert 'case unavailable' in source
+assert 'private var isAdServingPermitted: Bool' in source
+assert '''case .limited:
+            return true
+        case .currentConsent:
+            return ConsentInformation.shared.canRequestAds
+        case .unavailable:
+            return false''' in source
+assert source.count('isAdServingPermitted') >= 4
 assert 'Configured Moballo banner; demo=' in source
 assert 'Moballo banner loaded successfully' in source
 assert 'retryableFailure' in source
 assert 'authorizationRetryAttempts < 3' in source
+assert 'authorizationRetryWorkItem == nil' in source
+assert '!authorizationStarted' in source.split('private func scheduleAuthorizationRetry()', 1)[1].split('private func cancelAuthorizationRetry', 1)[0]
+assert 'self.authorizationRetryGeneration == retryGeneration' in source
+assert 'private func cancelAuthorizationRetry(preservingAttempt: Bool)' in source
+assert 'authorizationRetryWorkItem?.cancel()' in source
+assert 'refreshConsentWhileServingLimited()' in source
+assert 'guard adServingMode == .limited' in source
+assert 'acceptExistingLimitedFallback: Bool = true' in source
+assert 'if acceptExistingLimitedFallback, sharedConsentMode == .limited' in source
+assert 'acceptExistingLimitedFallback: false' in source
+assert 'authorizationRetryAttempts = max(0, authorizationRetryAttempts - 1)' in source
+assert source.count('if adServingMode == .limited {') >= 2
+assert 'if !Self.sharedMobileAdsStarted {' in source
+assert 'self.startMobileAds(generation: generation)' in source
+assert '''case .limited:
+                self.startMobileAds(generation: generation) { [weak self] in''' in source
+assert source.index('self.startMobileAds(generation: generation) { [weak self] in') < source.index('self.scheduleAuthorizationRetry()')
+assert '''self.authorizationStarted = false
+            self.authorizationComplete = true''' in source
+assert 'authorizationGeneration += 1' in source
+assert source.count('self.authorizationGeneration == generation') >= 3
 assert '''if authorizationComplete {
+            if adServingMode == .limited {
+                scheduleAuthorizationRetry()
+            }
             if !adLoaded || pendingAdLoad {
                 loadBannerIfPossible()
             }
@@ -37,8 +77,11 @@ assert '''if authorizationComplete {
         }''' in source
 assert 'sharedTrackingRetryAttempts < 3' in source
 assert 'UIApplication.didBecomeActiveNotification' in source
-assert 'presentSharedConsentFormWhenActive(from: presenter)' in source
+assert 'presentSharedConsentFormWhenActive(' in source
+assert 'consentGeneration: consentGeneration' in source
 assert 'sharedConsentDidBecomeActiveObserver' in source
+assert 'private static var sharedConsentGeneration = 0' in source
+assert source.count('sharedConsentGeneration == consentGeneration') >= 3
 assert 'guard UIApplication.shared.applicationState == .active else' in source
 assert 'stopObservingSharedConsentApplicationActivation()' in source
 assert 'bannerRetryAttempts < 5' in source
@@ -60,13 +103,41 @@ assert '''if !adLoaded || pendingAdLoad {
         } else {
             beginAuthorizationIfNeeded()
         }''' in source
-assert '''if authorizationComplete {
-            loadBannerIfPossible()
-        } else {
-            authorizationRetryAttempts = 0
-            authorizationRetryScheduled = false
-            beginAuthorizationIfNeeded()
-        }''' in source
+assert '''authorizationStarted = false
+        authorizationComplete = false
+        adServingMode = nil
+        authorizationGeneration += 1
+        authorizationRetryAttempts = 0
+        cancelAuthorizationRetry(preservingAttempt: false)''' in source
+assert '''let mode: AdServingMode = ConsentInformation.shared.canRequestAds
+            ? .currentConsent
+            : .unavailable''' in source
+assert 'finishSharedConsent(mode: mode, retryableFailure: false)' in source
+assert 'private static func finishSharedConsentWithCurrentDecision(' in source
+assert 'invalidatingInFlight: Bool = false' in source
+current_decision = source.split('private static func finishSharedConsentWithCurrentDecision(', 1)[1].split('private func scheduleAuthorizationRetry()', 1)[0]
+assert 'let shouldBroadcastDecision = invalidatingInFlight || sharedConsentMode == .limited' in current_decision
+assert 'name: NotificationName.privacyChoicesDidChange' in current_decision
+assert current_decision.index('finishSharedConsent(mode: mode, retryableFailure: false)') < current_decision.index('name: NotificationName.privacyChoicesDidChange')
+assert '''case .unavailable:
+                self.authorizationStarted = false
+                self.authorizationComplete = true''' in source
+assert '''case .unavailable:
+                self.pendingAdLoad = false''' in source
+assert '''case .currentConsent:
+                self.authorizationRetryAttempts = 0''' in source
+assert source.count('name: NotificationName.privacyChoicesDidChange') == 2
+privacy_options = source.split('public func presentPrivacyOptions(from presenter: UIViewController)', 1)[1].split('@objc private func privacyChoicesDidChange()', 1)[0]
+assert 'guard error == nil else' in privacy_options
+assert 'Self.activateLimitedAdFallback()' not in privacy_options
+assert 'Self.finishSharedConsentWithCurrentDecision(invalidatingInFlight: true)' in privacy_options
+assert 'name: NotificationName.privacyChoicesDidChange' not in privacy_options
+assert 'Self.invalidateSharedConsentDecision()' not in privacy_options
+assert privacy_options.index('guard error == nil else') < privacy_options.index('Self.finishSharedConsentWithCurrentDecision(invalidatingInFlight: true)')
+limited_refresh = source.split('private func refreshConsentWhileServingLimited()', 1)[1].split('private func requestTrackingIfNeeded', 1)[0]
+assert 'guard !authorizationStarted else {\n            // A state transition can race the delayed callback.' in limited_refresh
+assert 'authorizationRetryAttempts = max(0, authorizationRetryAttempts - 1)' in limited_refresh
+assert 'name: NotificationName.privacyChoicesDidChange' not in limited_refresh
 assert '''public var shouldOfferPrivacyOptions: Bool {
         ConsentInformation.shared.privacyOptionsRequirementStatus == .required
     }''' in source
@@ -85,14 +156,20 @@ assert "pod 'Google-Mobile-Ads-SDK', '13.6.0'" in podfile
 assert "pod 'GoogleUserMessagingPlatform', '3.1.0'" in podfile
 assert 'Google-Mobile-Ads-SDK (13.6.0)' in lockfile
 assert 'GoogleUserMessagingPlatform (3.1.0)' in lockfile
-assert project.count('CURRENT_PROJECT_VERSION = 9000;') == 2
-assert project.count('MARKETING_VERSION = 9.0.0;') == 2
+assert project.count('CURRENT_PROJECT_VERSION = 9001;') == 2
+assert project.count('MARKETING_VERSION = 9.0.1;') == 2
 assert 'IPHONEOS_DEPLOYMENT_TARGET = 10.0;' not in project
 assert 'FRAMEWORK_SEARCH_PATHS = "";' not in project
 assert 'HEADER_SEARCH_PATHS = "";' not in project
 assert 'OTHER_LDFLAGS = "";' not in project
 assert '<string>6.0</string>' in info_plist
-assert "pod 'MOBAdvertising', '9.0.0'" in readme
+assert "pod 'MOBAdvertising', '9.0.1'" in readme
 assert 'MOBALLO_USE_TEST_ADS=1' in readme
 assert 'does not require\narbitrary-load ATS exceptions' in readme
+assert 'request limited\n  ads' in readme
+assert 'Do not gate this error-only manual LTD path on a stale `canRequestAds`' in readme
+assert 'successful UMP flow is authoritative' in readme
+assert '`canRequestAds == false`' in readme
+assert "paid/ad-free entitlement is absolute" in readme
+assert "Never use production inventory for QA" in readme
 print("MOBAdvertising consent and demo-routing policy passed")

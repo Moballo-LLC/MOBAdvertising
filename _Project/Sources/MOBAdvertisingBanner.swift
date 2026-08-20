@@ -13,6 +13,12 @@ import AppTrackingTransparency
 #endif
 
 public final class MOBAdvertisingBanner: UIViewController, BannerViewDelegate {
+    private enum AdServingMode {
+        case currentConsent
+        case limited
+        case unavailable
+    }
+
     private enum NotificationName {
         static let didPresent = Notification.Name("com.moballo.advertising.adPresented")
         static let didUnpresent = Notification.Name("com.moballo.advertising.adUnpresented")
@@ -22,9 +28,12 @@ public final class MOBAdvertisingBanner: UIViewController, BannerViewDelegate {
     }
 
     private static let googleDemoBannerAdUnitID = "ca-app-pub-3940256099942544/2435281174"
+    private static let googleConsentForCookiesKey = "gad_has_consent_for_cookies"
     private static var sharedConsentComplete = false
     private static var sharedConsentInFlight = false
-    private static var sharedConsentWaiters: [(Bool, Bool) -> Void] = []
+    private static var sharedConsentMode: AdServingMode?
+    private static var sharedConsentWaiters: [(AdServingMode, Bool) -> Void] = []
+    private static var sharedConsentGeneration = 0
     private static weak var sharedConsentPresenter: UIViewController?
     private static var sharedConsentDidBecomeActiveObserver: NSObjectProtocol?
     private static var sharedTrackingComplete = false
@@ -50,8 +59,11 @@ public final class MOBAdvertisingBanner: UIViewController, BannerViewDelegate {
     private var presentingAd = false
     private var authorizationStarted = false
     private var authorizationComplete = false
+    private var adServingMode: AdServingMode?
+    private var authorizationGeneration = 0
     private var authorizationRetryAttempts = 0
-    private var authorizationRetryScheduled = false
+    private var authorizationRetryGeneration = 0
+    private var authorizationRetryWorkItem: DispatchWorkItem?
     private var bannerRequestInFlight = false
     private var requestedBannerWidth: CGFloat?
     private var pendingAdLoad = false
@@ -111,6 +123,7 @@ public final class MOBAdvertisingBanner: UIViewController, BannerViewDelegate {
     }
 
     deinit {
+        authorizationRetryWorkItem?.cancel()
         bannerRetryWorkItem?.cancel()
         NotificationCenter.default.removeObserver(self)
     }
@@ -144,6 +157,7 @@ public final class MOBAdvertisingBanner: UIViewController, BannerViewDelegate {
     public override func viewDidDisappear(_ animated: Bool) {
         super.viewDidDisappear(animated)
         isViewVisible = false
+        cancelAuthorizationRetry(preservingAttempt: true)
         bannerRetryWorkItem?.cancel()
         bannerRetryWorkItem = nil
     }
@@ -247,6 +261,7 @@ public final class MOBAdvertisingBanner: UIViewController, BannerViewDelegate {
 
     @objc public func hideBannerView() {
         shouldBeShown = false
+        cancelAuthorizationRetry(preservingAttempt: true)
         pendingAdLoad = false
         adLoaded = false
         bannerRetryAttempts = 0
@@ -279,11 +294,17 @@ public final class MOBAdvertisingBanner: UIViewController, BannerViewDelegate {
                     NSLog("Unable to present advertising privacy options: \(error.localizedDescription)")
                 }
                 #endif
-                guard error == nil else { return }
-                NotificationCenter.default.post(
-                    name: NotificationName.privacyChoicesDidChange,
-                    object: nil
-                )
+                guard error == nil else {
+                    // A presentation error is not a new privacy decision.
+                    // Preserve the prior shared state, especially an
+                    // authoritative unavailable decision.
+                    return
+                }
+                // The completed Privacy Choices form has already updated UMP.
+                // Publish that current decision before resetting controllers;
+                // a second network update could fail and must not replace this
+                // authoritative result with the transient limited fallback.
+                Self.finishSharedConsentWithCurrentDecision(invalidatingInFlight: true)
             }
         }
     }
@@ -291,19 +312,22 @@ public final class MOBAdvertisingBanner: UIViewController, BannerViewDelegate {
     @objc private func privacyChoicesDidChange() {
         replaceBannerView()
         pendingAdLoad = shouldBeShown
+        authorizationStarted = false
+        authorizationComplete = false
+        adServingMode = nil
+        authorizationGeneration += 1
+        authorizationRetryAttempts = 0
+        cancelAuthorizationRetry(preservingAttempt: false)
         reloadLayout()
-        if authorizationComplete {
-            loadBannerIfPossible()
-        } else {
-            authorizationRetryAttempts = 0
-            authorizationRetryScheduled = false
-            beginAuthorizationIfNeeded()
-        }
+        beginAuthorizationIfNeeded()
     }
 
     @objc private func applicationDidBecomeActive() {
         guard shouldBeShown, isViewVisible else { return }
         if authorizationComplete {
+            if adServingMode == .limited {
+                scheduleAuthorizationRetry()
+            }
             if !adLoaded || pendingAdLoad {
                 loadBannerIfPossible()
             }
@@ -325,8 +349,7 @@ public final class MOBAdvertisingBanner: UIViewController, BannerViewDelegate {
         }
         requestedBannerWidth = nil
         guard shouldBeShown,
-              authorizationComplete,
-              ConsentInformation.shared.canRequestAds else {
+              isAdServingPermitted else {
             adLoaded = false
             reloadLayout()
             return
@@ -380,6 +403,9 @@ public final class MOBAdvertisingBanner: UIViewController, BannerViewDelegate {
     private func beginAuthorizationIfNeeded() {
         guard shouldBeShown, isViewVisible else { return }
         if authorizationComplete {
+            if adServingMode == .limited {
+                scheduleAuthorizationRetry()
+            }
             if !adLoaded || pendingAdLoad {
                 loadBannerIfPossible()
             }
@@ -387,62 +413,94 @@ public final class MOBAdvertisingBanner: UIViewController, BannerViewDelegate {
         }
         guard !authorizationStarted else { return }
         authorizationStarted = true
+        authorizationGeneration += 1
+        let generation = authorizationGeneration
 
-        Self.requestSharedConsent(from: self) { [weak self] consentAllowsAds, retryableFailure in
-            guard let self else { return }
-            guard consentAllowsAds else {
+        Self.requestSharedConsent(from: self) { [weak self] mode, retryableFailure in
+            guard let self, self.authorizationGeneration == generation else { return }
+            self.adServingMode = mode
+            switch mode {
+            case .limited:
+                self.startMobileAds(generation: generation) { [weak self] in
+                    guard let self, self.authorizationGeneration == generation else { return }
+                    if retryableFailure {
+                        self.scheduleAuthorizationRetry()
+                    } else {
+                        self.authorizationRetryAttempts = 0
+                    }
+                }
+                return
+            case .unavailable:
                 self.authorizationStarted = false
-                self.authorizationComplete = false
+                self.authorizationComplete = true
+                self.authorizationRetryAttempts = 0
                 self.pendingAdLoad = false
                 self.adLoaded = false
                 self.reloadLayout()
-                if retryableFailure {
-                    self.scheduleAuthorizationRetry()
-                }
                 return
+            case .currentConsent:
+                break
             }
             guard self.shouldBeShown, self.isViewVisible else {
                 self.authorizationStarted = false
                 return
             }
             self.authorizationRetryAttempts = 0
-            self.requestTrackingIfNeeded()
+            self.requestTrackingIfNeeded(generation: generation)
         }
     }
 
     private static func requestSharedConsent(
         from presenter: UIViewController,
-        completion: @escaping (Bool, Bool) -> Void
+        acceptExistingLimitedFallback: Bool = true,
+        completion: @escaping (AdServingMode, Bool) -> Void
     ) {
-        if sharedConsentComplete {
-            completion(ConsentInformation.shared.canRequestAds, false)
+        // A transient fallback is immediately usable by a newly visible
+        // banner. Consent recovery explicitly bypasses this fast path below.
+        if acceptExistingLimitedFallback, sharedConsentMode == .limited {
+            completion(.limited, true)
+            return
+        }
+        if sharedConsentComplete, let sharedConsentMode {
+            completion(sharedConsentMode, false)
             return
         }
         sharedConsentWaiters.append(completion)
         guard !sharedConsentInFlight else { return }
         sharedConsentInFlight = true
+        sharedConsentGeneration += 1
+        let consentGeneration = sharedConsentGeneration
 
         ConsentInformation.shared.requestConsentInfoUpdate(with: RequestParameters()) { error in
             DispatchQueue.main.async {
+                guard sharedConsentInFlight,
+                      sharedConsentGeneration == consentGeneration else { return }
                 guard error == nil else {
                     #if DEBUG
                     NSLog("Unable to update advertising consent: \(error!.localizedDescription)")
                     #endif
-                    finishSharedConsent(
-                        allowed: false,
-                        retryableFailure: true
-                    )
+                    finishSharedConsentAfterTransientFailure()
                     return
                 }
-                presentSharedConsentFormWhenActive(from: presenter)
+                presentSharedConsentFormWhenActive(
+                    from: presenter,
+                    consentGeneration: consentGeneration
+                )
             }
         }
     }
 
-    private static func presentSharedConsentFormWhenActive(from presenter: UIViewController) {
+    private static func presentSharedConsentFormWhenActive(
+        from presenter: UIViewController,
+        consentGeneration: Int
+    ) {
+        guard sharedConsentInFlight,
+              sharedConsentGeneration == consentGeneration else { return }
         guard UIApplication.shared.applicationState == .active else {
             sharedConsentPresenter = presenter
-            observeNextSharedConsentApplicationActivation()
+            observeNextSharedConsentApplicationActivation(
+                consentGeneration: consentGeneration
+            )
             return
         }
 
@@ -450,31 +508,42 @@ public final class MOBAdvertisingBanner: UIViewController, BannerViewDelegate {
         stopObservingSharedConsentApplicationActivation()
         ConsentForm.loadAndPresentIfRequired(from: presenter) { formError in
             DispatchQueue.main.async {
+                guard sharedConsentInFlight,
+                      sharedConsentGeneration == consentGeneration else { return }
                 #if DEBUG
                 if let formError {
                     NSLog("Unable to present advertising consent: \(formError.localizedDescription)")
                 }
                 #endif
-                finishSharedConsent(
-                    allowed: formError == nil && ConsentInformation.shared.canRequestAds,
-                    retryableFailure: formError != nil
-                )
+                if formError != nil {
+                    finishSharedConsentAfterTransientFailure()
+                    return
+                }
+
+                finishSharedConsentWithCurrentDecision()
             }
         }
     }
 
-    private static func observeNextSharedConsentApplicationActivation() {
+    private static func observeNextSharedConsentApplicationActivation(
+        consentGeneration: Int
+    ) {
         guard sharedConsentDidBecomeActiveObserver == nil else { return }
         sharedConsentDidBecomeActiveObserver = NotificationCenter.default.addObserver(
             forName: UIApplication.didBecomeActiveNotification,
             object: nil,
             queue: .main
         ) { _ in
+            guard sharedConsentInFlight,
+                  sharedConsentGeneration == consentGeneration else { return }
             guard let presenter = sharedConsentPresenter else {
-                finishSharedConsent(allowed: false, retryableFailure: true)
+                finishSharedConsentAfterTransientFailure()
                 return
             }
-            presentSharedConsentFormWhenActive(from: presenter)
+            presentSharedConsentFormWhenActive(
+                from: presenter,
+                consentGeneration: consentGeneration
+            )
         }
     }
 
@@ -484,38 +553,157 @@ public final class MOBAdvertisingBanner: UIViewController, BannerViewDelegate {
         sharedConsentDidBecomeActiveObserver = nil
     }
 
-    private static func finishSharedConsent(allowed: Bool, retryableFailure: Bool) {
+    private static func finishSharedConsent(
+        mode: AdServingMode,
+        retryableFailure: Bool
+    ) {
         stopObservingSharedConsentApplicationActivation()
         sharedConsentPresenter = nil
         sharedConsentInFlight = false
         sharedConsentComplete = !retryableFailure
+        sharedConsentMode = mode
         let waiters = sharedConsentWaiters
         sharedConsentWaiters.removeAll()
-        waiters.forEach { $0(allowed, retryableFailure) }
+        waiters.forEach { $0(mode, retryableFailure) }
+    }
+
+    private static func activateLimitedAdFallback() {
+        UserDefaults.standard.set(0, forKey: googleConsentForCookiesKey)
+        sharedConsentComplete = false
+        sharedConsentMode = .limited
+    }
+
+    private static func finishSharedConsentAfterTransientFailure() {
+        // Google's documented global limited-ad signal is the deliberate
+        // fallback when the current UMP update or required form cannot finish.
+        // A completed UMP flow remains authoritative and is handled separately.
+        activateLimitedAdFallback()
+        finishSharedConsent(mode: .limited, retryableFailure: true)
+    }
+
+    private static func clearLimitedAdFallback() {
+        UserDefaults.standard.removeObject(forKey: googleConsentForCookiesKey)
+    }
+
+    private static func finishSharedConsentWithCurrentDecision(
+        invalidatingInFlight: Bool = false
+    ) {
+        let shouldBroadcastDecision = invalidatingInFlight || sharedConsentMode == .limited
+        if invalidatingInFlight {
+            sharedConsentGeneration += 1
+        }
+        clearLimitedAdFallback()
+        let mode: AdServingMode = ConsentInformation.shared.canRequestAds
+            ? .currentConsent
+            : .unavailable
+        finishSharedConsent(mode: mode, retryableFailure: false)
+        if shouldBroadcastDecision {
+            // Recovery and Privacy Choices publish their authoritative shared
+            // decision independently of whichever controller initiated the
+            // request. Every remaining banner must leave stale limited mode,
+            // even if the initiating controller was deallocated mid-request.
+            NotificationCenter.default.post(
+                name: NotificationName.privacyChoicesDidChange,
+                object: nil
+            )
+        }
     }
 
     private func scheduleAuthorizationRetry() {
         guard authorizationRetryAttempts < 3,
-              !authorizationRetryScheduled,
+              authorizationRetryWorkItem == nil,
+              !authorizationStarted,
+              adServingMode == .limited,
               shouldBeShown,
               isViewVisible else { return }
         authorizationRetryAttempts += 1
-        authorizationRetryScheduled = true
+        authorizationRetryGeneration += 1
+        let retryGeneration = authorizationRetryGeneration
         let delay = TimeInterval(5 * authorizationRetryAttempts)
-        DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
-            guard let self else { return }
-            self.authorizationRetryScheduled = false
-            self.beginAuthorizationIfNeeded()
+        let workItem = DispatchWorkItem { [weak self] in
+            guard let self,
+                  self.authorizationRetryGeneration == retryGeneration else { return }
+            self.authorizationRetryWorkItem = nil
+            self.refreshConsentWhileServingLimited()
+        }
+        authorizationRetryWorkItem = workItem
+        DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: workItem)
+    }
+
+    private func cancelAuthorizationRetry(preservingAttempt: Bool) {
+        guard authorizationRetryWorkItem != nil else { return }
+        authorizationRetryGeneration += 1
+        authorizationRetryWorkItem?.cancel()
+        authorizationRetryWorkItem = nil
+        if preservingAttempt {
+            authorizationRetryAttempts = max(0, authorizationRetryAttempts - 1)
         }
     }
 
-    private func requestTrackingIfNeeded() {
+    private func refreshConsentWhileServingLimited() {
+        guard adServingMode == .limited else { return }
+        guard shouldBeShown, isViewVisible else {
+            // The delayed work fired after the banner left the screen. Keep
+            // that attempt available; beginAuthorizationIfNeeded() resumes it
+            // when this controller is visible again.
+            authorizationRetryAttempts = max(0, authorizationRetryAttempts - 1)
+            return
+        }
+        guard !authorizationStarted else {
+            // A state transition can race the delayed callback. This timer did
+            // not start a UMP request, so return its slot to the bounded budget;
+            // the active request will schedule the next retry if still needed.
+            authorizationRetryAttempts = max(0, authorizationRetryAttempts - 1)
+            return
+        }
+        authorizationStarted = true
+        authorizationGeneration += 1
+        let generation = authorizationGeneration
+        Self.requestSharedConsent(
+            from: self,
+            acceptExistingLimitedFallback: false
+        ) { [weak self] mode, retryableFailure in
+            guard let self, self.authorizationGeneration == generation else { return }
+            self.authorizationStarted = false
+            self.adServingMode = mode
+            switch mode {
+            case .limited:
+                if !Self.sharedMobileAdsStarted {
+                    self.authorizationStarted = true
+                    self.authorizationComplete = false
+                    self.startMobileAds(generation: generation) { [weak self] in
+                        guard let self, self.authorizationGeneration == generation else { return }
+                        if retryableFailure {
+                            self.scheduleAuthorizationRetry()
+                        }
+                    }
+                    return
+                }
+                if retryableFailure {
+                    self.scheduleAuthorizationRetry()
+                }
+                return
+            case .unavailable:
+                self.pendingAdLoad = false
+                self.adLoaded = false
+                self.reloadLayout()
+                self.authorizationRetryAttempts = 0
+                return
+            case .currentConsent:
+                self.authorizationRetryAttempts = 0
+                return
+            }
+        }
+    }
+
+    private func requestTrackingIfNeeded(generation: Int) {
         guard shouldRequestTrackingAuthorization else {
-            startMobileAds()
+            startMobileAds(generation: generation)
             return
         }
         Self.requestSharedTrackingAuthorization { [weak self] in
-            self?.startMobileAds()
+            guard let self, self.authorizationGeneration == generation else { return }
+            self.startMobileAds(generation: generation)
         }
     }
 
@@ -566,16 +754,21 @@ public final class MOBAdvertisingBanner: UIViewController, BannerViewDelegate {
         waiters.forEach { $0() }
     }
 
-    private func startMobileAds() {
+    private func startMobileAds(
+        generation: Int,
+        completion: @escaping () -> Void = {}
+    ) {
         Self.startSharedMobileAds { [weak self] in
-            guard let self else { return }
+            guard let self, self.authorizationGeneration == generation else { return }
             guard self.shouldBeShown, self.isViewVisible else {
                 self.authorizationStarted = false
                 return
             }
+            self.authorizationStarted = false
             self.authorizationComplete = true
             self.pendingAdLoad = self.shouldBeShown
             self.loadBannerIfPossible()
+            completion()
         }
     }
 
@@ -588,7 +781,7 @@ public final class MOBAdvertisingBanner: UIViewController, BannerViewDelegate {
         guard !sharedMobileAdsStartInFlight else { return }
         sharedMobileAdsStartInFlight = true
         #if DEBUG
-        NSLog("Initializing Mobile Ads after UMP and ATT")
+        NSLog("Initializing Mobile Ads after advertising authorization")
         #endif
         MobileAds.shared.start { _ in
             DispatchQueue.main.async {
@@ -605,8 +798,7 @@ public final class MOBAdvertisingBanner: UIViewController, BannerViewDelegate {
         guard shouldBeShown,
               isViewVisible,
               UIApplication.shared.applicationState == .active,
-              authorizationComplete,
-              ConsentInformation.shared.canRequestAds,
+              isAdServingPermitted,
               !bannerRequestInFlight,
               bannerRetryWorkItem == nil else {
             return
@@ -662,6 +854,20 @@ public final class MOBAdvertisingBanner: UIViewController, BannerViewDelegate {
         return abs(requestedBannerWidth - currentWidth) < 0.5
     }
 
+    private var isAdServingPermitted: Bool {
+        guard authorizationComplete else { return false }
+        switch adServingMode {
+        case .limited:
+            return true
+        case .currentConsent:
+            return ConsentInformation.shared.canRequestAds
+        case .unavailable:
+            return false
+        case nil:
+            return false
+        }
+    }
+
     private static func observeNextSharedApplicationActivation() {
         guard sharedDidBecomeActiveObserver == nil else { return }
         sharedDidBecomeActiveObserver = NotificationCenter.default.addObserver(
@@ -698,8 +904,7 @@ public final class MOBAdvertisingBanner: UIViewController, BannerViewDelegate {
               shouldBeShown,
               isViewVisible,
               UIApplication.shared.applicationState == .active,
-              authorizationComplete,
-              ConsentInformation.shared.canRequestAds else {
+              isAdServingPermitted else {
             return
         }
 

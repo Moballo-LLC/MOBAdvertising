@@ -8,7 +8,7 @@ App Tracking Transparency, Mobile Ads startup, and banner loading in that order.
 
 ```ruby
 use_frameworks!
-pod 'MOBAdvertising', '9.0.0'
+pod 'MOBAdvertising', '9.0.1'
 ```
 
 ## Host configuration
@@ -63,6 +63,28 @@ if bannerController?.shouldOfferPrivacyOptions == true {
 }
 ```
 
-Failed consent refreshes fail closed and retry while an active banner remains
-requested. Interrupted ATT prompts and transient banner failures use bounded
-retries; hiding the banner cancels pending per-banner retry work.
+## Revenue-safe privacy behavior
+
+- Refresh UMP on every process launch before deciding how to request ads.
+- When the current UMP flow completes and permits requests, remove any manual
+  limited-ad override, request ATT only when the host asks for it, and let
+  Google's current decision choose the highest-value eligible serving mode.
+- If the UMP update or required form cannot complete, set Google's documented
+  `gad_has_consent_for_cookies` signal to `0`, skip ATT, and request limited
+  ads. Do not gate this error-only manual LTD path on a stale `canRequestAds`
+  value; that value becomes authoritative after the current UMP flow completes
+  successfully. Continue bounded UMP recovery attempts without withdrawing an
+  already eligible limited banner.
+- A successful UMP flow is authoritative. If it completes with
+  `canRequestAds == false`, remove any manual limited-ad override and do not
+  request ads until the user changes their privacy choices.
+- A host's paid/ad-free entitlement is absolute. Call `hideBannerView()` and do
+  not instantiate another ad surface for an entitled user; the limited fallback
+  must never bypass that product promise.
+- Never use production inventory for QA. Debug, Simulator, and explicit
+  `MOBALLO_USE_TEST_ADS=1` runs use Google's demo unit.
+
+Interrupted ATT prompts and transient banner failures use bounded retries;
+hiding the banner cancels pending per-banner retry work. Host apps remain
+responsible for accurate App Store privacy answers, a published Google consent
+message, and any jurisdiction-specific legal requirements.
