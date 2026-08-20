@@ -408,12 +408,13 @@ public final class MOBAdvertisingBanner: UIViewController, BannerViewDelegate {
             self.adServingMode = mode
             switch mode {
             case .limited:
-                self.authorizationStarted = false
-                self.startMobileAds(generation: generation)
-                if retryableFailure {
-                    self.scheduleAuthorizationRetry()
-                } else {
-                    self.authorizationRetryAttempts = 0
+                self.startMobileAds(generation: generation) { [weak self] in
+                    guard let self, self.authorizationGeneration == generation else { return }
+                    if retryableFailure {
+                        self.scheduleAuthorizationRetry()
+                    } else {
+                        self.authorizationRetryAttempts = 0
+                    }
                 }
                 return
             case .unavailable:
@@ -575,7 +576,14 @@ public final class MOBAdvertisingBanner: UIViewController, BannerViewDelegate {
             switch mode {
             case .limited:
                 if !self.authorizationComplete {
-                    self.startMobileAds(generation: generation)
+                    self.authorizationStarted = true
+                    self.startMobileAds(generation: generation) { [weak self] in
+                        guard let self, self.authorizationGeneration == generation else { return }
+                        if retryableFailure {
+                            self.scheduleAuthorizationRetry()
+                        }
+                    }
+                    return
                 }
                 if retryableFailure {
                     self.scheduleAuthorizationRetry()
@@ -653,16 +661,21 @@ public final class MOBAdvertisingBanner: UIViewController, BannerViewDelegate {
         waiters.forEach { $0() }
     }
 
-    private func startMobileAds(generation: Int) {
+    private func startMobileAds(
+        generation: Int,
+        completion: @escaping () -> Void = {}
+    ) {
         Self.startSharedMobileAds { [weak self] in
             guard let self, self.authorizationGeneration == generation else { return }
             guard self.shouldBeShown, self.isViewVisible else {
                 self.authorizationStarted = false
                 return
             }
+            self.authorizationStarted = false
             self.authorizationComplete = true
             self.pendingAdLoad = self.shouldBeShown
             self.loadBannerIfPossible()
+            completion()
         }
     }
 

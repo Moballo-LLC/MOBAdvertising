@@ -48,6 +48,11 @@ assert 'refreshConsentWhileServingLimited()' in source
 assert 'guard adServingMode == .limited' in source
 assert 'if !self.authorizationComplete {' in source
 assert 'self.startMobileAds(generation: generation)' in source
+assert '''case .limited:
+                self.startMobileAds(generation: generation) { [weak self] in''' in source
+assert source.index('self.startMobileAds(generation: generation) { [weak self] in') < source.index('self.scheduleAuthorizationRetry()')
+assert '''self.authorizationStarted = false
+            self.authorizationComplete = true''' in source
 assert 'authorizationGeneration += 1' in source
 assert source.count('self.authorizationGeneration == generation') >= 3
 assert '''if authorizationComplete {
