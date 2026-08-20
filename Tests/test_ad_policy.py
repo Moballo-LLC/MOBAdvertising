@@ -45,6 +45,10 @@ assert 'Configured Moballo banner; demo=' in source
 assert 'Moballo banner loaded successfully' in source
 assert 'retryableFailure' in source
 assert 'authorizationRetryAttempts < 3' in source
+assert 'authorizationRetryWorkItem == nil' in source
+assert 'self.authorizationRetryGeneration == retryGeneration' in source
+assert 'private func cancelAuthorizationRetry(preservingAttempt: Bool)' in source
+assert 'authorizationRetryWorkItem?.cancel()' in source
 assert 'refreshConsentWhileServingLimited()' in source
 assert 'guard adServingMode == .limited' in source
 assert 'acceptExistingLimitedFallback: Bool = true' in source
@@ -100,7 +104,7 @@ assert '''authorizationStarted = false
         adServingMode = nil
         authorizationGeneration += 1
         authorizationRetryAttempts = 0
-        authorizationRetryScheduled = false''' in source
+        cancelAuthorizationRetry(preservingAttempt: false)''' in source
 assert '''let mode: AdServingMode = ConsentInformation.shared.canRequestAds
                     ? .currentConsent
                     : .unavailable''' in source

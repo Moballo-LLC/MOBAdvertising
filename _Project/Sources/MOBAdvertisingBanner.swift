@@ -61,7 +61,8 @@ public final class MOBAdvertisingBanner: UIViewController, BannerViewDelegate {
     private var adServingMode: AdServingMode?
     private var authorizationGeneration = 0
     private var authorizationRetryAttempts = 0
-    private var authorizationRetryScheduled = false
+    private var authorizationRetryGeneration = 0
+    private var authorizationRetryWorkItem: DispatchWorkItem?
     private var bannerRequestInFlight = false
     private var requestedBannerWidth: CGFloat?
     private var pendingAdLoad = false
@@ -121,6 +122,7 @@ public final class MOBAdvertisingBanner: UIViewController, BannerViewDelegate {
     }
 
     deinit {
+        authorizationRetryWorkItem?.cancel()
         bannerRetryWorkItem?.cancel()
         NotificationCenter.default.removeObserver(self)
     }
@@ -154,6 +156,7 @@ public final class MOBAdvertisingBanner: UIViewController, BannerViewDelegate {
     public override func viewDidDisappear(_ animated: Bool) {
         super.viewDidDisappear(animated)
         isViewVisible = false
+        cancelAuthorizationRetry(preservingAttempt: true)
         bannerRetryWorkItem?.cancel()
         bannerRetryWorkItem = nil
     }
@@ -257,6 +260,7 @@ public final class MOBAdvertisingBanner: UIViewController, BannerViewDelegate {
 
     @objc public func hideBannerView() {
         shouldBeShown = false
+        cancelAuthorizationRetry(preservingAttempt: true)
         pendingAdLoad = false
         adLoaded = false
         bannerRetryAttempts = 0
@@ -312,7 +316,7 @@ public final class MOBAdvertisingBanner: UIViewController, BannerViewDelegate {
         adServingMode = nil
         authorizationGeneration += 1
         authorizationRetryAttempts = 0
-        authorizationRetryScheduled = false
+        cancelAuthorizationRetry(preservingAttempt: false)
         reloadLayout()
         beginAuthorizationIfNeeded()
     }
@@ -568,17 +572,31 @@ public final class MOBAdvertisingBanner: UIViewController, BannerViewDelegate {
 
     private func scheduleAuthorizationRetry() {
         guard authorizationRetryAttempts < 3,
-              !authorizationRetryScheduled,
+              authorizationRetryWorkItem == nil,
               adServingMode == .limited,
               shouldBeShown,
               isViewVisible else { return }
         authorizationRetryAttempts += 1
-        authorizationRetryScheduled = true
+        authorizationRetryGeneration += 1
+        let retryGeneration = authorizationRetryGeneration
         let delay = TimeInterval(5 * authorizationRetryAttempts)
-        DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
-            guard let self else { return }
-            self.authorizationRetryScheduled = false
+        let workItem = DispatchWorkItem { [weak self] in
+            guard let self,
+                  self.authorizationRetryGeneration == retryGeneration else { return }
+            self.authorizationRetryWorkItem = nil
             self.refreshConsentWhileServingLimited()
+        }
+        authorizationRetryWorkItem = workItem
+        DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: workItem)
+    }
+
+    private func cancelAuthorizationRetry(preservingAttempt: Bool) {
+        guard authorizationRetryWorkItem != nil else { return }
+        authorizationRetryGeneration += 1
+        authorizationRetryWorkItem?.cancel()
+        authorizationRetryWorkItem = nil
+        if preservingAttempt {
+            authorizationRetryAttempts = max(0, authorizationRetryAttempts - 1)
         }
     }
 
