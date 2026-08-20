@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
     s.name             = 'MOBAdvertising'
-    s.version          = '9.0.0'
+    s.version          = '9.0.1'
     s.summary          = 'Consent-gated adaptive Google Mobile Ads banners for UIKit applications'
     s.homepage         = 'https://github.com/Moballo-LLC/MOBAdvertising'
     s.license          = 'MIT'
