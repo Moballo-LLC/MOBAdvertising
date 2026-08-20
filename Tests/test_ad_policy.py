@@ -26,6 +26,10 @@ assert 'ConsentInformation.shared.canRequestAds' in source
 assert 'googleConsentForCookiesKey = "gad_has_consent_for_cookies"' in source
 assert 'UserDefaults.standard.set(0, forKey: googleConsentForCookiesKey)' in source
 assert 'UserDefaults.standard.removeObject(forKey: googleConsentForCookiesKey)' in source
+assert 'finishSharedConsentAfterTransientFailure()' in source
+assert '''guard ConsentInformation.shared.canRequestAds else {
+            clearLimitedAdFallback()
+            finishSharedConsent(mode: .unavailable, retryableFailure: true)''' in source
 assert 'finishSharedConsent(mode: .limited, retryableFailure: true)' in source
 assert 'finishSharedConsent(mode: mode, retryableFailure: false)' in source
 assert 'private enum AdServingMode' in source
@@ -44,16 +48,15 @@ assert 'Configured Moballo banner; demo=' in source
 assert 'Moballo banner loaded successfully' in source
 assert 'retryableFailure' in source
 assert 'authorizationRetryAttempts < 3' in source
-assert 'refreshConsentWhileServingLimited()' in source
-assert 'guard adServingMode == .limited' in source
+assert 'refreshConsentAfterRetryableFailure()' in source
+assert '''guard !Self.sharedConsentComplete,
+              adServingMode == .limited || adServingMode == .unavailable''' in source
 assert 'acceptExistingLimitedFallback: Bool = true' in source
 assert 'if acceptExistingLimitedFallback, sharedConsentMode == .limited' in source
 assert 'acceptExistingLimitedFallback: false' in source
 assert 'authorizationRetryAttempts = max(0, authorizationRetryAttempts - 1)' in source
-assert '''if adServingMode == .limited {
-                scheduleAuthorizationRetry()
-            }''' in source
-assert 'if !self.authorizationComplete {' in source
+assert source.count('adServingMode == .limited || adServingMode == .unavailable') >= 3
+assert 'if !Self.sharedMobileAdsStarted {' in source
 assert 'self.startMobileAds(generation: generation)' in source
 assert '''case .limited:
                 self.startMobileAds(generation: generation) { [weak self] in''' in source
@@ -63,6 +66,10 @@ assert '''self.authorizationStarted = false
 assert 'authorizationGeneration += 1' in source
 assert source.count('self.authorizationGeneration == generation') >= 3
 assert '''if authorizationComplete {
+            if !Self.sharedConsentComplete,
+               adServingMode == .limited || adServingMode == .unavailable {
+                scheduleAuthorizationRetry()
+            }
             if !adLoaded || pendingAdLoad {
                 loadBannerIfPossible()
             }
@@ -106,10 +113,16 @@ assert 'finishSharedConsent(mode: mode, retryableFailure: false)' in source
 assert '''case .unavailable:
                 self.authorizationStarted = false
                 self.authorizationComplete = true''' in source
-assert '''case .currentConsent, .unavailable:
+assert '''case .unavailable:
+                self.pendingAdLoad = false''' in source
+assert '''case .currentConsent:
                 self.authorizationRetryAttempts = 0''' in source
 assert source.count('name: NotificationName.privacyChoicesDidChange') >= 2
 assert 'Every live banner must leave its local limited mode together.' in source
+privacy_options = source.split('public func presentPrivacyOptions(from presenter: UIViewController)', 1)[1].split('@objc private func privacyChoicesDidChange()', 1)[0]
+assert 'guard error == nil else' in privacy_options
+assert 'Self.activateLimitedAdFallback()' not in privacy_options
+assert privacy_options.index('guard error == nil else') < privacy_options.index('Self.invalidateSharedConsentDecision()')
 assert '''public var shouldOfferPrivacyOptions: Bool {
         ConsentInformation.shared.privacyOptionsRequirementStatus == .required
     }''' in source

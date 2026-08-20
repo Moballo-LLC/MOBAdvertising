@@ -289,11 +289,13 @@ public final class MOBAdvertisingBanner: UIViewController, BannerViewDelegate {
                     NSLog("Unable to present advertising privacy options: \(error.localizedDescription)")
                 }
                 #endif
-                if error != nil {
-                    Self.activateLimitedAdFallback()
-                } else {
-                    Self.invalidateSharedConsentDecision()
+                guard error == nil else {
+                    // A presentation error is not a new privacy decision.
+                    // Preserve the prior shared state, especially an
+                    // authoritative unavailable decision.
+                    return
                 }
+                Self.invalidateSharedConsentDecision()
                 NotificationCenter.default.post(
                     name: NotificationName.privacyChoicesDidChange,
                     object: nil
@@ -318,7 +320,8 @@ public final class MOBAdvertisingBanner: UIViewController, BannerViewDelegate {
     @objc private func applicationDidBecomeActive() {
         guard shouldBeShown, isViewVisible else { return }
         if authorizationComplete {
-            if adServingMode == .limited {
+            if !Self.sharedConsentComplete,
+               adServingMode == .limited || adServingMode == .unavailable {
                 scheduleAuthorizationRetry()
             }
             if !adLoaded || pendingAdLoad {
@@ -396,6 +399,10 @@ public final class MOBAdvertisingBanner: UIViewController, BannerViewDelegate {
     private func beginAuthorizationIfNeeded() {
         guard shouldBeShown, isViewVisible else { return }
         if authorizationComplete {
+            if !Self.sharedConsentComplete,
+               adServingMode == .limited || adServingMode == .unavailable {
+                scheduleAuthorizationRetry()
+            }
             if !adLoaded || pendingAdLoad {
                 loadBannerIfPossible()
             }
@@ -423,9 +430,13 @@ public final class MOBAdvertisingBanner: UIViewController, BannerViewDelegate {
             case .unavailable:
                 self.authorizationStarted = false
                 self.authorizationComplete = true
-                self.authorizationRetryAttempts = 0
                 self.pendingAdLoad = false
                 self.adLoaded = false
+                if retryableFailure {
+                    self.scheduleAuthorizationRetry()
+                } else {
+                    self.authorizationRetryAttempts = 0
+                }
                 self.reloadLayout()
                 return
             case .currentConsent:
@@ -465,8 +476,7 @@ public final class MOBAdvertisingBanner: UIViewController, BannerViewDelegate {
                     #if DEBUG
                     NSLog("Unable to update advertising consent: \(error!.localizedDescription)")
                     #endif
-                    activateLimitedAdFallback()
-                    finishSharedConsent(mode: .limited, retryableFailure: true)
+                    finishSharedConsentAfterTransientFailure()
                     return
                 }
                 presentSharedConsentFormWhenActive(from: presenter)
@@ -491,8 +501,7 @@ public final class MOBAdvertisingBanner: UIViewController, BannerViewDelegate {
                 }
                 #endif
                 if formError != nil {
-                    activateLimitedAdFallback()
-                    finishSharedConsent(mode: .limited, retryableFailure: true)
+                    finishSharedConsentAfterTransientFailure()
                     return
                 }
 
@@ -513,8 +522,7 @@ public final class MOBAdvertisingBanner: UIViewController, BannerViewDelegate {
             queue: .main
         ) { _ in
             guard let presenter = sharedConsentPresenter else {
-                activateLimitedAdFallback()
-                finishSharedConsent(mode: .limited, retryableFailure: true)
+                finishSharedConsentAfterTransientFailure()
                 return
             }
             presentSharedConsentFormWhenActive(from: presenter)
@@ -547,6 +555,20 @@ public final class MOBAdvertisingBanner: UIViewController, BannerViewDelegate {
         sharedConsentMode = .limited
     }
 
+    private static func finishSharedConsentAfterTransientFailure() {
+        // The limited-ad signal chooses a privacy-preserving serving mode; it
+        // cannot override UMP's request gate. Reuse a cached eligible decision
+        // when possible, otherwise remain unavailable while bounded recovery
+        // continues.
+        guard ConsentInformation.shared.canRequestAds else {
+            clearLimitedAdFallback()
+            finishSharedConsent(mode: .unavailable, retryableFailure: true)
+            return
+        }
+        activateLimitedAdFallback()
+        finishSharedConsent(mode: .limited, retryableFailure: true)
+    }
+
     private static func clearLimitedAdFallback() {
         UserDefaults.standard.removeObject(forKey: googleConsentForCookiesKey)
     }
@@ -559,6 +581,8 @@ public final class MOBAdvertisingBanner: UIViewController, BannerViewDelegate {
     private func scheduleAuthorizationRetry() {
         guard authorizationRetryAttempts < 3,
               !authorizationRetryScheduled,
+              !Self.sharedConsentComplete,
+              adServingMode == .limited || adServingMode == .unavailable,
               shouldBeShown,
               isViewVisible else { return }
         authorizationRetryAttempts += 1
@@ -567,12 +591,13 @@ public final class MOBAdvertisingBanner: UIViewController, BannerViewDelegate {
         DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
             guard let self else { return }
             self.authorizationRetryScheduled = false
-            self.refreshConsentWhileServingLimited()
+            self.refreshConsentAfterRetryableFailure()
         }
     }
 
-    private func refreshConsentWhileServingLimited() {
-        guard adServingMode == .limited else { return }
+    private func refreshConsentAfterRetryableFailure() {
+        guard !Self.sharedConsentComplete,
+              adServingMode == .limited || adServingMode == .unavailable else { return }
         guard shouldBeShown, isViewVisible else {
             // The delayed work fired after the banner left the screen. Keep
             // that attempt available; beginAuthorizationIfNeeded() resumes it
@@ -593,8 +618,9 @@ public final class MOBAdvertisingBanner: UIViewController, BannerViewDelegate {
             self.adServingMode = mode
             switch mode {
             case .limited:
-                if !self.authorizationComplete {
+                if !Self.sharedMobileAdsStarted {
                     self.authorizationStarted = true
+                    self.authorizationComplete = false
                     self.startMobileAds(generation: generation) { [weak self] in
                         guard let self, self.authorizationGeneration == generation else { return }
                         if retryableFailure {
@@ -607,7 +633,21 @@ public final class MOBAdvertisingBanner: UIViewController, BannerViewDelegate {
                     self.scheduleAuthorizationRetry()
                 }
                 return
-            case .currentConsent, .unavailable:
+            case .unavailable:
+                self.pendingAdLoad = false
+                self.adLoaded = false
+                self.reloadLayout()
+                if retryableFailure {
+                    self.scheduleAuthorizationRetry()
+                    return
+                }
+                self.authorizationRetryAttempts = 0
+                NotificationCenter.default.post(
+                    name: NotificationName.privacyChoicesDidChange,
+                    object: nil
+                )
+                return
+            case .currentConsent:
                 self.authorizationRetryAttempts = 0
                 // Every live banner must leave its local limited mode together.
                 // Re-enter through the shared decision so a successful denial
