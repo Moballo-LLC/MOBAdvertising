@@ -33,6 +33,7 @@ public final class MOBAdvertisingBanner: UIViewController, BannerViewDelegate {
     private static var sharedConsentInFlight = false
     private static var sharedConsentMode: AdServingMode?
     private static var sharedConsentWaiters: [(AdServingMode, Bool) -> Void] = []
+    private static var sharedConsentGeneration = 0
     private static weak var sharedConsentPresenter: UIViewController?
     private static var sharedConsentDidBecomeActiveObserver: NSObjectProtocol?
     private static var sharedTrackingComplete = false
@@ -303,7 +304,7 @@ public final class MOBAdvertisingBanner: UIViewController, BannerViewDelegate {
                 // Publish that current decision before resetting controllers;
                 // a second network update could fail and must not replace this
                 // authoritative result with the transient limited fallback.
-                Self.finishSharedConsentWithCurrentDecision()
+                Self.finishSharedConsentWithCurrentDecision(invalidatingInFlight: true)
                 NotificationCenter.default.post(
                     name: NotificationName.privacyChoicesDidChange,
                     object: nil
@@ -471,9 +472,13 @@ public final class MOBAdvertisingBanner: UIViewController, BannerViewDelegate {
         sharedConsentWaiters.append(completion)
         guard !sharedConsentInFlight else { return }
         sharedConsentInFlight = true
+        sharedConsentGeneration += 1
+        let consentGeneration = sharedConsentGeneration
 
         ConsentInformation.shared.requestConsentInfoUpdate(with: RequestParameters()) { error in
             DispatchQueue.main.async {
+                guard sharedConsentInFlight,
+                      sharedConsentGeneration == consentGeneration else { return }
                 guard error == nil else {
                     #if DEBUG
                     NSLog("Unable to update advertising consent: \(error!.localizedDescription)")
@@ -481,15 +486,25 @@ public final class MOBAdvertisingBanner: UIViewController, BannerViewDelegate {
                     finishSharedConsentAfterTransientFailure()
                     return
                 }
-                presentSharedConsentFormWhenActive(from: presenter)
+                presentSharedConsentFormWhenActive(
+                    from: presenter,
+                    consentGeneration: consentGeneration
+                )
             }
         }
     }
 
-    private static func presentSharedConsentFormWhenActive(from presenter: UIViewController) {
+    private static func presentSharedConsentFormWhenActive(
+        from presenter: UIViewController,
+        consentGeneration: Int
+    ) {
+        guard sharedConsentInFlight,
+              sharedConsentGeneration == consentGeneration else { return }
         guard UIApplication.shared.applicationState == .active else {
             sharedConsentPresenter = presenter
-            observeNextSharedConsentApplicationActivation()
+            observeNextSharedConsentApplicationActivation(
+                consentGeneration: consentGeneration
+            )
             return
         }
 
@@ -497,6 +512,8 @@ public final class MOBAdvertisingBanner: UIViewController, BannerViewDelegate {
         stopObservingSharedConsentApplicationActivation()
         ConsentForm.loadAndPresentIfRequired(from: presenter) { formError in
             DispatchQueue.main.async {
+                guard sharedConsentInFlight,
+                      sharedConsentGeneration == consentGeneration else { return }
                 #if DEBUG
                 if let formError {
                     NSLog("Unable to present advertising consent: \(formError.localizedDescription)")
@@ -512,18 +529,25 @@ public final class MOBAdvertisingBanner: UIViewController, BannerViewDelegate {
         }
     }
 
-    private static func observeNextSharedConsentApplicationActivation() {
+    private static func observeNextSharedConsentApplicationActivation(
+        consentGeneration: Int
+    ) {
         guard sharedConsentDidBecomeActiveObserver == nil else { return }
         sharedConsentDidBecomeActiveObserver = NotificationCenter.default.addObserver(
             forName: UIApplication.didBecomeActiveNotification,
             object: nil,
             queue: .main
         ) { _ in
+            guard sharedConsentInFlight,
+                  sharedConsentGeneration == consentGeneration else { return }
             guard let presenter = sharedConsentPresenter else {
                 finishSharedConsentAfterTransientFailure()
                 return
             }
-            presentSharedConsentFormWhenActive(from: presenter)
+            presentSharedConsentFormWhenActive(
+                from: presenter,
+                consentGeneration: consentGeneration
+            )
         }
     }
 
@@ -565,7 +589,12 @@ public final class MOBAdvertisingBanner: UIViewController, BannerViewDelegate {
         UserDefaults.standard.removeObject(forKey: googleConsentForCookiesKey)
     }
 
-    private static func finishSharedConsentWithCurrentDecision() {
+    private static func finishSharedConsentWithCurrentDecision(
+        invalidatingInFlight: Bool = false
+    ) {
+        if invalidatingInFlight {
+            sharedConsentGeneration += 1
+        }
         clearLimitedAdFallback()
         let mode: AdServingMode = ConsentInformation.shared.canRequestAds
             ? .currentConsent
